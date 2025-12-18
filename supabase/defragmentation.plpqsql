@@ -1,0 +1,271 @@
+-- DEFRAG & Compat
+
+-- Database Schema Updates
+
+-- Function to add defrag_at column and index to tables
+CREATE OR REPLACE FUNCTION setup_powersync_defrag_columns() RETURNS void AS $$
+BEGIN
+  -- Add defrag_at column to creators table if it doesn't exist
+  ALTER TABLE creators ADD COLUMN IF NOT EXISTS defrag_at TIMESTAMPTZ DEFAULT NULL;
+  CREATE INDEX IF NOT EXISTS idx_creators_defrag_at ON creators(defrag_at);
+
+  -- Add columns and indexes to all relevant tables
+  ALTER TABLE pin ADD COLUMN IF NOT EXISTS defrag_at TIMESTAMPTZ DEFAULT NULL;
+  CREATE INDEX IF NOT EXISTS idx_pin_defrag_at ON pin(defrag_at);
+
+  ALTER TABLE device ADD COLUMN IF NOT EXISTS defrag_at TIMESTAMPTZ DEFAULT NULL;
+  CREATE INDEX IF NOT EXISTS idx_device_defrag_at ON device(defrag_at);
+
+  ALTER TABLE events ADD COLUMN IF NOT EXISTS defrag_at TIMESTAMPTZ DEFAULT NULL;
+  CREATE INDEX IF NOT EXISTS idx_events_defrag_at ON events(defrag_at);
+
+  ALTER TABLE attendee ADD COLUMN IF NOT EXISTS defrag_at TIMESTAMPTZ DEFAULT NULL;
+  CREATE INDEX IF NOT EXISTS idx_attendee_defrag_at ON attendee(defrag_at);
+
+  ALTER TABLE check_in_logs ADD COLUMN IF NOT EXISTS defrag_at TIMESTAMPTZ DEFAULT NULL;
+  CREATE INDEX IF NOT EXISTS idx_check_in_logs_defrag_at ON check_in_logs(defrag_at);
+
+  -- Initial population of defrag_at
+  UPDATE creators SET defrag_at = now() WHERE defrag_at IS NULL;
+  UPDATE pin SET defrag_at = now() WHERE defrag_at IS NULL;
+  UPDATE device SET defrag_at = now() WHERE defrag_at IS NULL;
+  UPDATE events SET defrag_at = now() WHERE defrag_at IS NULL;
+  UPDATE attendee SET defrag_at = now() WHERE defrag_at IS NULL;
+  UPDATE check_in_logs SET defrag_at = now() WHERE defrag_at IS NULL;
+END;
+$$ LANGUAGE plpgsql;
+
+-- select public.setup_powersync_defrag_columns()
+
+-- Create a log table to track defragmentation runs
+CREATE TABLE IF NOT EXISTS powersync_defrag_log (
+  id SERIAL PRIMARY KEY,
+  run_timestamp TIMESTAMPTZ NOT NULL,
+  duration_seconds NUMERIC NOT NULL,
+  total_rows_updated INT NOT NULL,
+  created_at TIMESTAMPTZ DEFAULT now()
+);
+
+
+-- Defragmentation Function
+
+CREATE OR REPLACE FUNCTION powersync_defragment(
+  p_batch_size INT DEFAULT 10000,
+  p_log_details BOOLEAN DEFAULT FALSE
+) RETURNS void AS $$
+DECLARE
+  v_start_time TIMESTAMPTZ;
+  v_end_time TIMESTAMPTZ;
+  v_updated_rows INT;
+  v_total_updated INT := 0;
+BEGIN
+  v_start_time := clock_timestamp();
+
+  -- Tier 1: High-frequency tables (check_in_logs) - 3 day interval
+  UPDATE check_in_logs
+  SET defrag_at = clock_timestamp()
+  WHERE id IN (
+    SELECT id FROM check_in_logs
+    WHERE defrag_at < clock_timestamp() - INTERVAL '3 days'
+    ORDER BY defrag_at
+    LIMIT p_batch_size
+  );
+
+  GET DIAGNOSTICS v_updated_rows = ROW_COUNT;
+  v_total_updated := v_total_updated + v_updated_rows;
+  IF p_log_details THEN
+    RAISE NOTICE 'Updated % rows in check_in_logs', v_updated_rows;
+  END IF;
+
+  -- Tier 2: Medium-frequency tables - 1 week interval
+  UPDATE attendee
+  SET defrag_at = clock_timestamp()
+  WHERE id IN (
+    SELECT id FROM attendee
+    WHERE defrag_at < clock_timestamp() - INTERVAL '1 week'
+    ORDER BY defrag_at
+    LIMIT p_batch_size
+  );
+
+  GET DIAGNOSTICS v_updated_rows = ROW_COUNT;
+  v_total_updated := v_total_updated + v_updated_rows;
+  IF p_log_details THEN
+    RAISE NOTICE 'Updated % rows in attendee', v_updated_rows;
+  END IF;
+
+  UPDATE events
+  SET defrag_at = clock_timestamp()
+  WHERE id IN (
+    SELECT id FROM events
+    WHERE defrag_at < clock_timestamp() - INTERVAL '1 week'
+    ORDER BY defrag_at
+    LIMIT p_batch_size
+  );
+
+  GET DIAGNOSTICS v_updated_rows = ROW_COUNT;
+  v_total_updated := v_total_updated + v_updated_rows;
+  IF p_log_details THEN
+    RAISE NOTICE 'Updated % rows in events', v_updated_rows;
+  END IF;
+
+  -- Tier 3: Low-frequency tables - 2 week interval
+  UPDATE creators
+  SET defrag_at = clock_timestamp()
+  WHERE id IN (
+    SELECT id FROM creators
+    WHERE defrag_at < clock_timestamp() - INTERVAL '2 weeks'
+    ORDER BY defrag_at
+    LIMIT p_batch_size
+  );
+
+  GET DIAGNOSTICS v_updated_rows = ROW_COUNT;
+  v_total_updated := v_total_updated + v_updated_rows;
+  IF p_log_details THEN
+    RAISE NOTICE 'Updated % rows in creators', v_updated_rows;
+  END IF;
+
+  UPDATE pin
+  SET defrag_at = clock_timestamp()
+  WHERE id IN (
+    SELECT id FROM pin
+    WHERE defrag_at < clock_timestamp() - INTERVAL '2 weeks'
+    ORDER BY defrag_at
+    LIMIT p_batch_size
+  );
+
+  GET DIAGNOSTICS v_updated_rows = ROW_COUNT;
+  v_total_updated := v_total_updated + v_updated_rows;
+  IF p_log_details THEN
+    RAISE NOTICE 'Updated % rows in pin', v_updated_rows;
+  END IF;
+
+  UPDATE device
+  SET defrag_at = clock_timestamp()
+  WHERE id IN (
+    SELECT id FROM device
+    WHERE defrag_at < clock_timestamp() - INTERVAL '2 weeks'
+    ORDER BY defrag_at
+    LIMIT p_batch_size
+  );
+
+  GET DIAGNOSTICS v_updated_rows = ROW_COUNT;
+  v_total_updated := v_total_updated + v_updated_rows;
+  IF p_log_details THEN
+    RAISE NOTICE 'Updated % rows in device', v_updated_rows;
+  END IF;
+
+  -- Log completion and record in logging table
+  v_end_time := clock_timestamp();
+
+  INSERT INTO powersync_defrag_log (
+    run_timestamp,
+    duration_seconds,
+    total_rows_updated
+  ) VALUES (
+    v_start_time,
+    EXTRACT(EPOCH FROM (v_end_time - v_start_time)),
+    v_total_updated
+  );
+END;
+$$ LANGUAGE plpgsql;
+
+
+select public.powersync_defragment()
+
+
+-- Function to check defragmentation status
+CREATE OR REPLACE FUNCTION check_powersync_defrag_status() RETURNS TABLE (
+  table_name TEXT,
+  total_rows BIGINT,
+  rows_needing_defrag BIGINT,
+  defrag_percentage NUMERIC
+) AS $$
+BEGIN
+  RETURN QUERY
+  SELECT * FROM (
+    SELECT
+      'creators' AS table_name,
+      COUNT(*)::BIGINT AS total_rows,
+      COUNT(*) FILTER(WHERE defrag_at < now() - INTERVAL '2 weeks')::BIGINT AS rows_needing_defrag,
+      CASE
+        WHEN COUNT(*) = 0 THEN 0
+        ELSE (100 - (COUNT(*) FILTER(WHERE defrag_at < now() - INTERVAL '2 weeks')::NUMERIC / COUNT(*)::NUMERIC * 100))
+      END AS defrag_percentage
+    FROM creators
+
+    UNION ALL
+
+    SELECT
+      'pin' AS table_name,
+      COUNT(*)::BIGINT AS total_rows,
+      COUNT(*) FILTER(WHERE defrag_at < now() - INTERVAL '2 weeks')::BIGINT AS rows_needing_defrag,
+      CASE
+        WHEN COUNT(*) = 0 THEN 0
+        ELSE (100 - (COUNT(*) FILTER(WHERE defrag_at < now() - INTERVAL '2 weeks')::NUMERIC / COUNT(*)::NUMERIC * 100))
+      END AS defrag_percentage
+    FROM pin
+
+    UNION ALL
+
+    SELECT
+      'device' AS table_name,
+      COUNT(*)::BIGINT AS total_rows,
+      COUNT(*) FILTER(WHERE defrag_at < now() - INTERVAL '2 weeks')::BIGINT AS rows_needing_defrag,
+      CASE
+        WHEN COUNT(*) = 0 THEN 0
+        ELSE (100 - (COUNT(*) FILTER(WHERE defrag_at < now() - INTERVAL '2 weeks')::NUMERIC / COUNT(*)::NUMERIC * 100))
+      END AS defrag_percentage
+    FROM device
+
+    UNION ALL
+
+    SELECT
+      'events' AS table_name,
+      COUNT(*)::BIGINT AS total_rows,
+      COUNT(*) FILTER(WHERE defrag_at < now() - INTERVAL '1 week')::BIGINT AS rows_needing_defrag,
+      CASE
+        WHEN COUNT(*) = 0 THEN 0
+        ELSE (100 - (COUNT(*) FILTER(WHERE defrag_at < now() - INTERVAL '1 week')::NUMERIC / COUNT(*)::NUMERIC * 100))
+      END AS defrag_percentage
+    FROM events
+
+    UNION ALL
+
+    SELECT
+      'attendee' AS table_name,
+      COUNT(*)::BIGINT AS total_rows,
+      COUNT(*) FILTER(WHERE defrag_at < now() - INTERVAL '1 week')::BIGINT AS rows_needing_defrag,
+      CASE
+        WHEN COUNT(*) = 0 THEN 0
+        ELSE (100 - (COUNT(*) FILTER(WHERE defrag_at < now() - INTERVAL '1 week')::NUMERIC / COUNT(*)::NUMERIC * 100))
+      END AS defrag_percentage
+    FROM attendee
+
+    UNION ALL
+
+    SELECT
+      'check_in_logs' AS table_name,
+      COUNT(*)::BIGINT AS total_rows,
+      COUNT(*) FILTER(WHERE defrag_at < now() - INTERVAL '3 days')::BIGINT AS rows_needing_defrag,
+      CASE
+        WHEN COUNT(*) = 0 THEN 0
+        ELSE (100 - (COUNT(*) FILTER(WHERE defrag_at < now() - INTERVAL '3 days')::NUMERIC / COUNT(*)::NUMERIC * 100))
+      END AS defrag_percentage
+    FROM check_in_logs
+  ) AS defrag_stats
+  ORDER BY defrag_percentage ASC;
+END;
+$$ LANGUAGE plpgsql;
+
+
+select public.check_powersync_defrag_status()
+
+
+-- Daily defragmentation at 3:00 AM
+SELECT cron.schedule(
+  'powersync-defrag-daily',  -- unique job name
+  '0 3 * * *',              -- cron expression (daily at 3 AM)
+  $$SELECT powersync_defragment(5000, true)$$  -- function call with batch size and logging
+);
+
+SELECT * FROM cron.job;

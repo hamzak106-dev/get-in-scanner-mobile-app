@@ -1,0 +1,144 @@
+DECLARE
+    v_response TEXT;
+    v_attempts INTEGER := 0;
+    v_max_attempts CONSTANT INTEGER := 3;
+    v_success BOOLEAN := FALSE;
+    v_attendee RECORD;
+    v_device RECORD;
+BEGIN
+    -- Only proceed if status is CHECK_IN or CHECK_OUT
+    IF NEW.status IN ('CHECK_IN', 'CHECK_OUT') THEN
+        -- Fetch related attendee information
+        SELECT * INTO v_attendee FROM attendee WHERE id = NEW.attendee_id;
+
+        -- Fetch related device information
+        SELECT * INTO v_device FROM device WHERE id = NEW.device_id;
+
+        -- Only proceed if the status has changed from the current attendee status
+        IF NEW.status != v_attendee.status THEN
+            -- Retry loop
+            WHILE v_attempts < v_max_attempts AND NOT v_success LOOP
+                BEGIN
+                    v_attempts := v_attempts + 1;
+
+                    -- Attempt to make the HTTP request with headers
+                    SELECT content INTO v_response FROM http_post(
+                        'https://api.getin-nextgen.com/api/scanner-app/attendees?scanner-api-key=5c578ce23c24d16ea1d95b2fd248b3a6',
+                        to_json(
+                            json_build_object(
+                                'type', 'UPDATE',
+                                'table', 'attendee',
+                                'record', json_build_object(
+                                    'id', v_attendee.id,
+                                    'uid', v_attendee.id,
+                                    'name', v_attendee.name,
+                                    'email', v_attendee.email,
+                                    'phone', COALESCE(v_attendee.phone, ''),
+                                    'status', NEW.status,
+                                    'event_id', v_attendee.event_id,
+                                    'ticket_id', v_attendee.ticket_id,
+                                    'updated_at', CURRENT_TIMESTAMP,
+                                    'purchase_id', v_attendee.purchase_id,
+                                    'ticket_hash', v_attendee.ticket_hash,
+                                    'ticket_name', v_attendee.ticket_name,
+                                    'ticket_type', v_attendee.ticket_type,
+                                    'transaction_number', v_attendee.transaction_number,
+                                    'device_info', json_build_object(
+                                        'name', v_device.name,
+                                        'device_id', v_device.device_id
+                                    )
+                                )
+                            )
+                        )::text,
+                        'application/json'
+                    );
+
+                    -- If we get here, the request was successful
+                    v_success := TRUE;
+
+                    -- Update attendee status to match the check-in status
+                    EXECUTE format('UPDATE attendee SET status = %L WHERE uid = %L', NEW.status, v_attendee.id);
+
+                    -- Log successful attempt
+                    INSERT INTO trigger_logs (
+                        trigger_name,
+                        table_name,
+                        record_id,
+                        attendee_id,
+                        old_status,
+                        new_status,
+                        http_response,
+                        api_success
+                    ) VALUES (
+                        'checkin_logs_webhook_trigger',
+                        'check_in_logs',
+                        NEW.id,
+                        v_attendee.id,
+                        v_attendee.status,
+                        NEW.status,
+                        v_response,
+                        TRUE
+                    );
+
+                    RAISE NOTICE 'API call successful on attempt %', v_attempts;
+
+                EXCEPTION WHEN OTHERS THEN
+                    -- Log failed attempt
+                    RAISE NOTICE 'API call failed on attempt %. Error: %', v_attempts, SQLERRM;
+
+                    -- If this was the last attempt, log the failure
+                    IF v_attempts = v_max_attempts THEN
+                        INSERT INTO trigger_logs (
+                            trigger_name,
+                            table_name,
+                            record_id,
+                            attendee_id,
+                            old_status,
+                            new_status,
+                            http_response,
+                            api_success
+                        ) VALUES (
+                            'checkin_logs_webhook_trigger',
+                            'check_in_logs',
+                            NEW.id,
+                            v_attendee.id,
+                            v_attendee.status,
+                            NEW.status,
+                            'ERROR after ' || v_attempts || ' attempts. Last error: ' || SQLERRM,
+                            FALSE
+                        );
+
+                        -- Update status_update field to false after all retries fail
+                        UPDATE check_in_logs SET status_update = FALSE WHERE id = NEW.id;
+                    END IF;
+
+                    -- Add a small delay before retry (0.5 seconds)
+                    PERFORM pg_sleep(0.5);
+                END;
+            END LOOP;
+        ELSE
+            -- Status hasn't changed, log that no update was needed
+            INSERT INTO trigger_logs (
+                trigger_name,
+                table_name,
+                record_id,
+                attendee_id,
+                old_status,
+                new_status,
+                http_response,
+                api_success
+            ) VALUES (
+                'checkin_logs_webhook_trigger',
+                'check_in_logs',
+                NEW.id,
+                v_attendee.id,
+                v_attendee.status,
+                NEW.status,
+                'No update needed - status unchanged',
+                TRUE
+            );
+        END IF;
+    END IF;
+
+    RETURN NEW;
+END;

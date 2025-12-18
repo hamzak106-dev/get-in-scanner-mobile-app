@@ -1,0 +1,67 @@
+{
+  "project_info": {
+    "project_number": "910115388794",
+    "project_id": "scanner-dev-5489c",
+    "storage_bucket": "scanner-dev-5489c.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:910115388794:android:2286c42aefce2babe7eac3",
+        "android_client_info": {
+          "package_name": "com.getin.scanner"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBr40uSsBKuSJUBKgMMuEEFyf6_WQ4uf-g"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:910115388794:android:6523b73b3f2420fce7eac3",
+        "android_client_info": {
+          "package_name": "xyz.getin.scanner"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBr40uSsBKuSJUBKgMMuEEFyf6_WQ4uf-g"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:910115388794:android:a24ccd1f7910a7f9e7eac3",
+        "android_client_info": {
+          "package_name": "xyz.getin.scanner.stage"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBr40uSsBKuSJUBKgMMuEEFyf6_WQ4uf-g"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

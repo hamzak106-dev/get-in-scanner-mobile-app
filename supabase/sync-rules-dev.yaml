@@ -1,0 +1,343 @@
+# PowerSync Sync Rules - With Update Frequency Separation
+# Client params: user_id, type (producer/manager/onsite), event_ids (for onsite)
+#
+# Tables grouped by update frequency:
+# - High-frequency tables (check_in_logs): 3-day interval
+# - Medium-frequency tables (attendee, events): 1-week interval
+# - Low-frequency tables (creators, pin, device): 2-week interval
+#
+# Priority system:
+# - Priority 0: User data and event listings
+# - Priority 1: Ongoing events (happening now)
+# - Priority 2: Upcoming events (starting soon)
+# - Priority 3: Future events (scheduled later)
+
+bucket_definitions:
+  #---------------------------------------------------------------------------
+  # LOW FREQUENCY BUCKETS (creators, pin, device) - 2-week interval
+  #---------------------------------------------------------------------------
+
+  # Basic user data - all user types
+  user_data:
+    priority: 0
+    accept_potentially_dangerous_queries: true
+    parameters:
+      - SELECT user_id FROM creators
+        WHERE user_id = (request.parameters() ->> 'user_id')
+    data:
+      - SELECT * FROM creators WHERE user_id = bucket.user_id
+      - SELECT * FROM device WHERE user_id = bucket.user_id
+      - SELECT * FROM pin WHERE user_id = bucket.user_id
+
+  # Manager-specific user data
+  manager_user_data:
+    priority: 0
+    accept_potentially_dangerous_queries: true
+    parameters:
+      SELECT events.creator_user as user_id FROM events
+      WHERE (request.parameters() ->> 'user_id') in events.manager_ids
+      AND (request.parameters() ->> 'type') = 'manager'
+    data:
+      - SELECT * FROM creators WHERE creators.user_id = bucket.user_id
+      - SELECT * FROM pin WHERE pin.user_id = bucket.user_id
+      - SELECT * FROM device WHERE device.user_id = bucket.user_id
+
+  #---------------------------------------------------------------------------
+  # MEDIUM FREQUENCY BUCKETS (events, attendee) - 1-week interval
+  #---------------------------------------------------------------------------
+
+  # PRODUCER EVENT LISTINGS
+  producer_events_list:
+    priority: 0
+    accept_potentially_dangerous_queries: true
+    parameters:
+      - SELECT user_id FROM creators
+        WHERE user_id = (request.parameters() ->> 'user_id')
+        AND (request.parameters() ->> 'type') IS NULL
+      - SELECT user_id FROM creators
+        WHERE user_id = (request.parameters() ->> 'user_id')
+        AND (request.parameters() ->> 'type') != 'onsite'
+    data:
+      - SELECT * FROM events WHERE creator_user = bucket.user_id AND is_live = true
+
+  # MANAGER EVENT LISTINGS
+  manager_events_list:
+    priority: 0
+    accept_potentially_dangerous_queries: true
+    parameters:
+      - SELECT (request.parameters() ->> 'user_id') as user_id
+        WHERE (request.parameters() ->> 'type') = 'manager'
+    data:
+      - SELECT * FROM events
+        WHERE bucket.user_id in events.manager_ids
+        AND is_live = true
+
+  # ONSITE EVENT LISTINGS (specific events only)
+  onsite_events_list:
+    priority: 0
+    accept_potentially_dangerous_queries: true
+    parameters:
+      - SELECT (request.parameters() ->> 'user_id') as user_id
+        WHERE (request.parameters() ->> 'type') = 'onsite'
+    data:
+      - SELECT * FROM events WHERE creator_user = bucket.user_id AND is_live = true
+
+
+  # PRODUCER ATTENDEES BY PRIORITY
+  producer_ongoing_attendees:
+    priority: 1
+    accept_potentially_dangerous_queries: true
+    parameters:
+      - SELECT event_id FROM events
+        WHERE creator_user = (request.parameters() ->> 'user_id')
+        AND priority = 1
+        AND (request.parameters() ->> 'type') IS NULL
+      - SELECT event_id FROM events
+        WHERE creator_user = (request.parameters() ->> 'user_id')
+        AND priority = 1
+        AND (request.parameters() ->> 'type') != 'onsite'
+    data:
+      - SELECT * FROM attendee WHERE event_id = bucket.event_id
+
+  producer_upcoming_attendees:
+    priority: 2
+    accept_potentially_dangerous_queries: true
+    parameters:
+      - SELECT event_id FROM events
+        WHERE creator_user = (request.parameters() ->> 'user_id')
+        AND priority = 2
+        AND (request.parameters() ->> 'type') IS NULL
+      - SELECT event_id FROM events
+        WHERE creator_user = (request.parameters() ->> 'user_id')
+        AND priority = 2
+        AND (request.parameters() ->> 'type') != 'onsite'
+    data:
+      - SELECT * FROM attendee WHERE event_id = bucket.event_id
+
+  producer_future_attendees:
+    priority: 3
+    accept_potentially_dangerous_queries: true
+    parameters:
+      - SELECT event_id FROM events
+        WHERE creator_user = (request.parameters() ->> 'user_id')
+        AND priority = 3
+        AND (request.parameters() ->> 'type') IS NULL
+      - SELECT event_id FROM events
+        WHERE creator_user = (request.parameters() ->> 'user_id')
+        AND priority = 3
+        AND (request.parameters() ->> 'type') != 'onsite'
+    data:
+      - SELECT * FROM attendee WHERE event_id = bucket.event_id
+
+  # MANAGER ATTENDEES BY PRIORITY
+  manager_ongoing_attendees:
+    priority: 1
+    accept_potentially_dangerous_queries: true
+    parameters:
+      - SELECT event_id FROM events
+        WHERE (request.parameters() ->> 'user_id') in events.manager_ids
+        AND priority = 1
+        AND (request.parameters() ->> 'type') = 'manager'
+    data:
+      - SELECT * FROM attendee WHERE event_id = bucket.event_id
+
+  manager_upcoming_attendees:
+    priority: 2
+    accept_potentially_dangerous_queries: true
+    parameters:
+      - SELECT event_id FROM events
+        WHERE (request.parameters() ->> 'user_id') in events.manager_ids
+        AND priority = 2
+        AND (request.parameters() ->> 'type') = 'manager'
+    data:
+      - SELECT * FROM attendee WHERE event_id = bucket.event_id
+
+  manager_future_attendees:
+    priority: 3
+    accept_potentially_dangerous_queries: true
+    parameters:
+      - SELECT event_id FROM events
+        WHERE (request.parameters() ->> 'user_id') in events.manager_ids
+        AND priority = 3
+        AND (request.parameters() ->> 'type') = 'manager'
+    data:
+      - SELECT * FROM attendee WHERE event_id = bucket.event_id
+
+  # ONSITE ATTENDEES BY PRIORITY
+  onsite_ongoing_attendees:
+    priority: 1
+    accept_potentially_dangerous_queries: true
+    parameters:
+      - SELECT event_id FROM events
+        WHERE event_id in (request.parameters() ->> 'event_ids')
+        AND priority = 1
+        AND (request.parameters() ->> 'type') = 'onsite'
+    data:
+      - SELECT * FROM attendee WHERE event_id = bucket.event_id
+
+  onsite_upcoming_attendees:
+    priority: 2
+    accept_potentially_dangerous_queries: true
+    parameters:
+      - SELECT event_id FROM events
+        WHERE event_id in (request.parameters() ->> 'event_ids')
+        AND priority = 2
+        AND (request.parameters() ->> 'type') = 'onsite'
+    data:
+      - SELECT * FROM attendee WHERE event_id = bucket.event_id
+
+  onsite_future_attendees:
+    priority: 3
+    accept_potentially_dangerous_queries: true
+    parameters:
+      - SELECT event_id FROM events
+        WHERE event_id in (request.parameters() ->> 'event_ids')
+        AND priority = 3
+        AND (request.parameters() ->> 'type') = 'onsite'
+    data:
+      - SELECT * FROM attendee WHERE event_id = bucket.event_id
+
+  #---------------------------------------------------------------------------
+  # HIGH FREQUENCY BUCKETS (check_in_logs) - 3-day interval
+  #---------------------------------------------------------------------------
+
+  # PRODUCER CHECK-IN LOGS BY PRIORITY
+  producer_ongoing_checkins:
+    priority: 1
+    accept_potentially_dangerous_queries: true
+    parameters:
+      - SELECT event_id FROM events
+        WHERE creator_user = (request.parameters() ->> 'user_id')
+        AND priority = 1
+        AND (request.parameters() ->> 'type') IS NULL
+      - SELECT event_id FROM events
+        WHERE creator_user = (request.parameters() ->> 'user_id')
+        AND priority = 1
+        AND (request.parameters() ->> 'type') != 'onsite'
+    data:
+      - SELECT * FROM check_in_logs WHERE event_id = bucket.event_id
+
+  producer_upcoming_checkins:
+    priority: 2
+    accept_potentially_dangerous_queries: true
+    parameters:
+      - SELECT event_id FROM events
+        WHERE creator_user = (request.parameters() ->> 'user_id')
+        AND priority = 2
+        AND (request.parameters() ->> 'type') IS NULL
+      - SELECT event_id FROM events
+        WHERE creator_user = (request.parameters() ->> 'user_id')
+        AND priority = 2
+        AND (request.parameters() ->> 'type') != 'onsite'
+    data:
+      - SELECT * FROM check_in_logs WHERE event_id = bucket.event_id
+
+  producer_future_checkins:
+    priority: 3
+    accept_potentially_dangerous_queries: true
+    parameters:
+      - SELECT event_id FROM events
+        WHERE creator_user = (request.parameters() ->> 'user_id')
+        AND priority = 3
+        AND (request.parameters() ->> 'type') IS NULL
+      - SELECT event_id FROM events
+        WHERE creator_user = (request.parameters() ->> 'user_id')
+        AND priority = 3
+        AND (request.parameters() ->> 'type') != 'onsite'
+    data:
+      - SELECT * FROM check_in_logs WHERE event_id = bucket.event_id
+
+  # MANAGER CHECK-IN LOGS BY PRIORITY
+  manager_ongoing_checkins:
+    priority: 1
+    accept_potentially_dangerous_queries: true
+    parameters:
+      - SELECT event_id FROM events
+        WHERE (request.parameters() ->> 'user_id') in events.manager_ids
+        AND priority = 1
+        AND (request.parameters() ->> 'type') = 'manager'
+    data:
+      - SELECT * FROM check_in_logs WHERE event_id = bucket.event_id
+
+  manager_upcoming_checkins:
+    priority: 2
+    accept_potentially_dangerous_queries: true
+    parameters:
+      - SELECT event_id FROM events
+        WHERE (request.parameters() ->> 'user_id') in events.manager_ids
+        AND priority = 2
+        AND (request.parameters() ->> 'type') = 'manager'
+    data:
+      - SELECT * FROM check_in_logs WHERE event_id = bucket.event_id
+
+  manager_future_checkins:
+    priority: 3
+    accept_potentially_dangerous_queries: true
+    parameters:
+      - SELECT event_id FROM events
+        WHERE (request.parameters() ->> 'user_id') in events.manager_ids
+        AND priority = 3
+        AND (request.parameters() ->> 'type') = 'manager'
+    data:
+      - SELECT * FROM check_in_logs WHERE event_id = bucket.event_id
+
+  # ONSITE CHECK-IN LOGS BY PRIORITY
+  onsite_ongoing_checkins:
+    priority: 1
+    accept_potentially_dangerous_queries: true
+    parameters:
+      - SELECT event_id FROM events
+        WHERE event_id in (request.parameters() ->> 'event_ids')
+        AND priority = 1
+        AND (request.parameters() ->> 'type') = 'onsite'
+    data:
+      - SELECT * FROM check_in_logs WHERE event_id = bucket.event_id
+
+  onsite_upcoming_checkins:
+    priority: 2
+    accept_potentially_dangerous_queries: true
+    parameters:
+      - SELECT event_id FROM events
+        WHERE event_id in (request.parameters() ->> 'event_ids')
+        AND priority = 2
+        AND (request.parameters() ->> 'type') = 'onsite'
+    data:
+      - SELECT * FROM check_in_logs WHERE event_id = bucket.event_id
+
+  onsite_future_checkins:
+    priority: 3
+    accept_potentially_dangerous_queries: true
+    parameters:
+      - SELECT event_id FROM events
+        WHERE event_id in (request.parameters() ->> 'event_ids')
+        AND priority = 3
+        AND (request.parameters() ->> 'type') = 'onsite'
+    data:
+      - SELECT * FROM check_in_logs WHERE event_id = bucket.event_id
+
+    #  -----------------------------------------------------------------------------
+    #                       Addons tables
+    # ------------------------------------------------------------------------------
+
+  # All Add-ons data
+  all_add_ons:
+    priority: 0
+    data:
+      - select * from public.add_ons
+
+  # All Add-on descriptions
+  all_add_on_descriptions:
+    priority: 0
+    data:
+      - select * from public.add_on_descriptions
+
+  # All Images
+  all_images:
+    priority: 0
+    data:
+      - select * from public.images
+
+  all_attendee_add_ons:
+    priority: 0
+    data:
+      - select * from public.attendee_add_ons

@@ -1,0 +1,66 @@
+-- CREATE OR REPLACE FUNCTION public.update_events_live_status()
+-- RETURNS void AS $$
+--DECLARE
+--  updated_count INTEGER;
+--  current_count INTEGER;
+--BEGIN
+--  -- First, update events that are now in the past
+--  UPDATE public.events
+--  SET is_live = FALSE
+--  WHERE end_date < NOW()
+--  AND is_live IS NOT FALSE;
+--
+--  GET DIAGNOSTICS updated_count = ROW_COUNT;
+--
+--  -- Then, update events that were incorrectly marked as past but are actually future events
+--  -- This could happen if an event's end_date was changed after creation
+--  UPDATE public.events
+--  SET is_live = TRUE
+--  WHERE end_date >= NOW()
+--  AND is_live IS NOT TRUE;
+--
+--  GET DIAGNOSTICS current_count = ROW_COUNT;
+--
+--  -- Log the operation (optional)
+--  INSERT INTO public.trigger_logs (trigger_name, table_name, old_status, new_status, executed_at, http_response, api_success)
+--  VALUES (
+--    'update_events_live_status',
+--    'events',
+--    updated_count::text,
+--    current_count::text,
+--    NOW(),
+--    jsonb_build_object('past_events_updated', updated_count),
+--    true
+--  );
+--END;
+-- $$ LANGUAGE plpgsql SECURITY DEFINER;
+
+
+-- Check if pg_cron is already enabled
+-- SELECT * FROM pg_extension WHERE extname = 'pg_cron';
+
+-- Schedule your task
+-- SELECT cron.schedule(
+--   'update_events_live_status-daily',  -- unique job name
+--   '0 0 * * *',               -- cron schedule (midnight every day)
+--   $$SELECT public.update_events_live_status()$$  -- SQL to execute
+-- );
+
+
+-- Remove the old job
+-- SELECT cron.unschedule('update_events_live_status-daily');
+
+-- Create a new job that runs every minute
+-- SELECT cron.schedule(
+--   'cupdate_events_live_status-minute',  -- new job name
+--   '* * * * *',                -- cron schedule (every minute)
+--   $$SELECT public.update_events_live_status()$$  -- SQL to execute
+-- );
+
+-- Verify that your job was scheduled
+-- SELECT * FROM cron.job;
+
+-- To manually test:
+--SELECT public.update_events_live_status();
+
+-- SELECT id FROM public.events WHERE end_date < NOW()

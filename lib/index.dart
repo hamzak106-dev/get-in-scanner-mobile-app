@@ -1,0 +1,67 @@
+// Export pages
+export 'package:g_e_t_i_n_scanner/pages/home_screens/add_on_details_screen/add_on_details_screen_widget.dart'
+    show AddOnDetailsScreenWidget;
+export 'package:g_e_t_i_n_scanner/pages/home_screens/add_ons_list_screen/add_ons_list_screen_widget.dart'
+    show AddOnsListScreenWidget;
+export 'package:g_e_t_i_n_scanner/pages/home_screens/event_page_amount_entry/event_page_amount_entry_widget.dart'
+    show EventPageAmountEntryWidget;
+export 'package:g_e_t_i_n_scanner/pages/home_screens/event_page_purchaser_details/event_page_purchaser_details_widget.dart'
+    show EventPagePurchaserDetailsWidget;
+export 'package:g_e_t_i_n_scanner/pages/home_screens/scanner_pos/event_pos_widget.dart'
+    show ScannerPosWidget;
+export 'package:g_e_t_i_n_scanner/pages/tap_to_pay/chekout/chekout_widget.dart'
+    show ChekoutWidget;
+export 'package:g_e_t_i_n_scanner/pages/tap_to_pay/tap_to_pay_document/tap_to_pay_document_widget.dart'
+    show TapToPayDocumentWidget;
+export 'package:g_e_t_i_n_scanner/pages/tap_to_pay/tutorials/tutorials_widget.dart'
+    show TutorialsWidget;
+export '/pages/auth_screens/forgot_password_screen/forgot_password_screen_widget.dart'
+    show ForgotPasswordScreenWidget;
+export '/pages/auth_screens/loading_screen/loading_screen_widget.dart'
+    show LoadingScreenWidget;
+export '/pages/auth_screens/login_screen/login_screen_widget.dart'
+    show LoginScreenWidget;
+export '/pages/auth_screens/otp_screen/otp_screen_widget.dart'
+    show OtpScreenWidget;
+export '/pages/auth_screens/passkey_login_screen/passkey_login_screen_widget.dart'
+    show PasskeyLoginScreenWidget;
+export '/pages/auth_screens/select_profile_screen/select_profile_screen_widget.dart'
+    show SelectProfileScreenWidget;
+export '/pages/home_screens/add_pin_screen/add_pin_screen_widget.dart'
+    show AddPinScreenWidget;
+export '/pages/home_screens/add_scanners_screen/add_scanners_screen_widget.dart'
+    show AddScannersScreenWidget;
+export '/pages/home_screens/attendees_detail_screen/attendees_detail_screen_widget.dart'
+    show AttendeesDetailScreenWidget;
+export '/pages/home_screens/attendees_screen/attendees_screen_widget.dart'
+    show AttendeesScreenWidget;
+export '/pages/home_screens/dash_board_screen/dash_board_screen_widget.dart'
+    show DashBoardScreenWidget;
+export '/pages/home_screens/edit_attendee_screen/edit_attendee_screen_widget.dart'
+    show EditAttendeeScreenWidget;
+export '/pages/home_screens/event_summary_screen/event_summary_screen_widget.dart'
+    show EventSummaryScreenWidget;
+export '/pages/home_screens/scan_screen/scan_screen_widget.dart'
+    show ScanScreenWidget;
+export '/pages/home_screens/setting_screen/setting_screen_widget.dart'
+    show SettingScreenWidget;
+export '/pages/home_screens/summary_screen/summary_screen_widget.dart'
+    show SummaryScreenWidget;
+export '/pages/home_screens/sync_screen/sync_screen_widget.dart'
+    show SyncScreenWidget;
+export '/pages/home_screens/ticket_comment_screen/ticket_comment_screen_widget.dart'
+    show TicketCommentScreenWidget;
+export '/pages/manager/pin_by_manager/pin_by_manager_widget.dart'
+    show PinByManagerWidget;
+export '/pages/pin_screens/pin_details_screen/pin_details_screen_widget.dart'
+    show PinDetailsScreenWidget;
+export '/pages/pin_screens/pin_devices_screen/pin_devices_screen_widget.dart'
+    show PinDevicesScreenWidget;
+export '/pages/pin_screens/pin_events_screen/pin_events_screen_widget.dart'
+    show PinEventsScreenWidget;
+export '/pages/pin_screens/pin_info_screen/pin_info_screen_widget.dart'
+    show PinInfoScreenWidget;
+export '/pages/pin_screens/pin_manager_events_screen/pin_manager_events_screen_widget.dart'
+    show PinManagerEventsScreenWidget;
+export '/pages/pin_screens/pin_permissions_screen/pin_permissions_screen_widget.dart'
+    show PinPermissionsScreenWidget;
