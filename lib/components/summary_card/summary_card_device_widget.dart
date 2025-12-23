@@ -155,40 +155,43 @@ class _SummaryCardDeviceWidgetState extends State<SummaryCardDeviceWidget> {
                 decoration: BoxDecoration(
                   color: FlutterFlowTheme.of(context).primaryBackground,
                   border: Border.all(
-                    color: FlutterFlowTheme.of(context).tertiary,
+                    color: FlutterFlowTheme.of(context).customDarkBlue,
                     width: 1.0,
                   ),
-                  borderRadius: BorderRadius.circular(6.0),
+                  borderRadius: BorderRadius.circular(8.0),
                 ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.max,
-                  children: [
-                    Icon(
-                      FFIcons.kicDeck,
-                      color: FlutterFlowTheme.of(context).primaryText,
-                      size: 20.0,
-                    ),
-                    SizedBox(width: 8.0),
-                    Expanded(
-                      child: Text(
-                        ticketName,
+                child: Padding(
+                  padding: const EdgeInsets.all(15),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.max,
+                    children: [
+                      Icon(
+                        FFIcons.kicDeck,
+                        color: FlutterFlowTheme.of(context).primaryText,
+                        size: 20.0,
+                      ),
+                      SizedBox(width: 8.0),
+                      Expanded(
+                        child: Text(
+                          ticketName,
+                          style: FlutterFlowTheme.of(context).bodyMedium.override(
+                                fontFamily: 'Mona Sans',
+                                letterSpacing: 0.0,
+                              ),
+                        ),
+                      ),
+                      SizedBox(width: 8.0),
+                      Text(
+                        deviceCount,
                         style: FlutterFlowTheme.of(context).bodyMedium.override(
                               fontFamily: 'Mona Sans',
                               letterSpacing: 0.0,
+                              color: FlutterFlowTheme.of(context).secondaryText,
+                              fontWeight: FontWeight.w500,
                             ),
                       ),
-                    ),
-                    SizedBox(width: 8.0),
-                    Text(
-                      deviceCount,
-                      style: FlutterFlowTheme.of(context).bodyMedium.override(
-                            fontFamily: 'Mona Sans',
-                            letterSpacing: 0.0,
-                            color: FlutterFlowTheme.of(context).secondaryText,
-                            fontWeight: FontWeight.w500,
-                          ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               );
             }).toList(),

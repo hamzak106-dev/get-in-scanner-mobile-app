@@ -56,12 +56,13 @@ class _SummaryCardWidgetState extends State<SummaryCardWidget> {
           width: 1.0,
         ),
       ),
-      child: Padding(
-        padding: EdgeInsets.all(16.0),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Row(
+      child: Column(
+
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(15),
+            child: Row(
               mainAxisSize: MainAxisSize.max,
               children: [
                 widget.icon!,
@@ -84,7 +85,10 @@ class _SummaryCardWidgetState extends State<SummaryCardWidget> {
                 ),
               ].divide(SizedBox(width: 16.0)),
             ),
-            Row(
+          ),
+          Padding(
+            padding: const EdgeInsets.only(left: 15,right: 15,bottom: 15),
+            child: Row(
               mainAxisSize: MainAxisSize.max,
               children: [
                 Expanded(
@@ -184,8 +188,8 @@ class _SummaryCardWidgetState extends State<SummaryCardWidget> {
                 ),
               ].divide(SizedBox(width: 8.0)),
             ),
-          ].divide(SizedBox(height: 20.0)),
-        ),
+          ),
+        ],
       ),
     );
   }

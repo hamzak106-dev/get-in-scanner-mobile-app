@@ -17,7 +17,12 @@ abstract class FlutterFlowTheme {
 
   late Color primary;
   late Color secondary;
+  late Color secondary200;
+  late Color secondary600;
+
+
   late Color tertiary;
+  late Color customDarkBlue;
   late Color alternate;
   late Color primaryText;
   late Color secondaryText;
@@ -120,7 +125,13 @@ class LightModeTheme extends FlutterFlowTheme {
 
   late Color primary = const Color(0xFFFF281B);
   late Color secondary = const Color(0xFFFFFFFF);
+  late Color secondary200 = const Color(0xFF383A42);
+  late Color secondary600 = const Color(0xFF1C1D21);
+
+
   late Color tertiary = const Color(0xFF1C1D21);
+  late Color customDarkBlue = const Color(0xFF252045);
+
   late Color alternate = const Color(0xFF000000);
   late Color primaryText = const Color(0xFFFFFFFF);
   late Color secondaryText = const Color(0xCCFFFFFF);

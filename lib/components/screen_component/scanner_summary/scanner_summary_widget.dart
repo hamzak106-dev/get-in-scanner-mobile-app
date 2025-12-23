@@ -104,38 +104,39 @@ class _ScannerSummaryWidgetState extends State<ScannerSummaryWidget>
         Align(
           alignment: AlignmentDirectional(-1.0, 0.0),
           child: TabBar(
-            isScrollable: true,
             labelColor: FlutterFlowTheme.of(context).primaryText,
+            indicatorSize: TabBarIndicatorSize.tab,
+            isScrollable: true,
+
             unselectedLabelColor: FlutterFlowTheme.of(context).secondaryText,
             labelStyle: FlutterFlowTheme.of(context).titleMedium.override(
                   fontFamily: 'Mona Sans',
                   letterSpacing: 0.0,
-                  fontWeight: FontWeight.w500,
+                  fontWeight: FontWeight.w400,
+              fontSize: 14.0
                 ),
             unselectedLabelStyle:
                 FlutterFlowTheme.of(context).titleMedium.override(
                       fontFamily: 'Mona Sans',
-                      fontSize: 16.0,
+                      fontSize: 14.0,
                       letterSpacing: 0.0,
-                      fontWeight: FontWeight.w500,
+                      fontWeight: FontWeight.w400,
                     ),
             indicatorColor: FlutterFlowTheme.of(context).secondary,
+            indicator: UnderlineTabIndicator(
+              borderSide: BorderSide(
+                width: 1,
+                color: FlutterFlowTheme.of(context).secondary,
+              ),
+            ),
+            dividerHeight: 1,
+            dividerColor:FlutterFlowTheme.of(context).secondary200 ,
             tabAlignment: TabAlignment.start,
-            tabs: [
-              Tab(
-                child: Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 10.0),
-                  child: Text('Tickets'),
-                ),
-              ),
-              Tab(
-                child: Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 10.0),
-                  child: Text('Add-Ons'),
-                ),
-              ),
-            ],
-            controller: _model.tabBarController,
+
+            tabs: const [
+              Tab(text: 'Tickets'),
+              Tab(text: 'Add-Ons'),
+            ],            controller: _model.tabBarController,
             onTap: (i) async {
               [() async {}, () async {}][i]();
             },
@@ -396,38 +397,41 @@ class _ScannerSummaryWidgetState extends State<ScannerSummaryWidget>
                                 child: NoDataFoundWidget(),
                               );
                             }
-                            return ListView.separated(
-                              padding: EdgeInsets.zero,
-                              primary: false,
-                              shrinkWrap: true,
-                              scrollDirection: Axis.vertical,
-                              itemCount: deviceData.length,
-                              separatorBuilder: (_, __) =>
-                                  SizedBox(height: 20.0),
-                              itemBuilder: (context, deviceDataIndex) {
-                                final deviceDataItem =
-                                    deviceData[deviceDataIndex];
-                                return wrapWithModel(
-                                  model: _model.summaryCardModels1.getModel(
-                                    deviceDataIndex.toString(),
-                                    deviceDataIndex,
-                                  ),
-                                  updateCallback: () => safeSetState(() {}),
-                                  child: SummaryCardDeviceWidget(
-                                    key: Key(
-                                      'Keymfp_${deviceDataIndex.toString()}',
+                            return Padding(
+                              padding: const EdgeInsets.only(bottom: 40),
+                              child: ListView.separated(
+                                padding: EdgeInsets.zero,
+                                primary: false,
+                                shrinkWrap: true,
+                                scrollDirection: Axis.vertical,
+                                itemCount: deviceData.length,
+                                separatorBuilder: (_, __) =>
+                                    SizedBox(height: 20.0),
+                                itemBuilder: (context, deviceDataIndex) {
+                                  final deviceDataItem =
+                                      deviceData[deviceDataIndex];
+                                  return wrapWithModel(
+                                    model: _model.summaryCardModels1.getModel(
+                                      deviceDataIndex.toString(),
+                                      deviceDataIndex,
                                     ),
-                                    icon: Icon(
-                                      FFIcons.kicMobile,
-                                      color: FlutterFlowTheme.of(context)
-                                          .primaryText,
-                                      size: 20.0,
+                                    updateCallback: () => safeSetState(() {}),
+                                    child: SummaryCardDeviceWidget(
+                                      key: Key(
+                                        'Keymfp_${deviceDataIndex.toString()}',
+                                      ),
+                                      icon: Icon(
+                                        FFIcons.kicMobile,
+                                        color: FlutterFlowTheme.of(context)
+                                            .primaryText,
+                                        size: 20.0,
+                                      ),
+                                      summary: deviceDataItem,
+                                      eventIds: widget.event!.map((e) => e.eventId).toList(),
                                     ),
-                                    summary: deviceDataItem,
-                                    eventIds: widget.event!.map((e) => e.eventId).toList(),
-                                  ),
-                                );
-                              },
+                                  );
+                                },
+                              ),
                             );
                           },
                         );
@@ -446,7 +450,7 @@ class _ScannerSummaryWidgetState extends State<ScannerSummaryWidget>
                     children: [
                       Padding(
                         padding:
-                            EdgeInsetsDirectional.fromSTEB(0.0, 20.0, 0.0, 0.0),
+                            EdgeInsetsDirectional.fromSTEB(0.0, 16, 0.0, 0.0),
                         child: Container(
                           width: MediaQuery.sizeOf(context).width * 1.0,
                           decoration: BoxDecoration(
@@ -487,22 +491,21 @@ class _ScannerSummaryWidgetState extends State<ScannerSummaryWidget>
                                   model: _model.countDetailsCardModel1,
                                   updateCallback: () => safeSetState(() {}),
                                   child: Text(
-                                    _model.attendees
-                                        .where((att) =>
-                                            att.status == ScanResult.CHECK_IN.name)
+                                    '\$${_model.attendees
+                                        .where((att) => att.status == ScanResult.CHECK_IN.name)
                                         .fold<int>(
-                                            0,
-                                            (count, att) =>
-                                                count + att.addOns.length)
-                                        .toString(),
-                                    style: FlutterFlowTheme.of(context)
-                                        .bodyMedium
-                                        .override(
-                                          fontFamily: 'Mona Sans',
-                                          fontSize: 24.0,
-                                          letterSpacing: 0.0,
-                                        ),
+                                      0,
+                                          (count, att) => count + att.addOns.length,
+                                    )
+                                        .toDouble()
+                                        .toStringAsFixed(2)}',
+                                    style: FlutterFlowTheme.of(context).bodyMedium.override(
+                                      fontFamily: 'Mona Sans',
+                                      fontSize: 22.0,
+                                      fontWeight: FontWeight.w500,                                      letterSpacing: 0.0,
+                                    ),
                                   ),
+
                                 ),
                               ],
                             ),
@@ -511,7 +514,7 @@ class _ScannerSummaryWidgetState extends State<ScannerSummaryWidget>
                       ),
                       Padding(
                         padding:
-                            EdgeInsetsDirectional.fromSTEB(0.0, 20.0, 0.0, 0.0),
+                            EdgeInsetsDirectional.fromSTEB(0.0, 8.0, 0.0, 0.0),
                         child: Container(
                           width: MediaQuery.sizeOf(context).width * 1.0,
                           decoration: BoxDecoration(
@@ -549,19 +552,17 @@ class _ScannerSummaryWidgetState extends State<ScannerSummaryWidget>
                                   ),
                                 ),
                                 Text(
-                                  _model.attendees
+                                  '${_model.attendees
                                       .map((attendee) => attendee.addOns.length)
-                                      .fold<int>(
-                                          0, (sum, addOnCount) => sum + addOnCount)
-                                      .toString(),
-                                  style: FlutterFlowTheme.of(context)
-                                      .bodyMedium
-                                      .override(
-                                        fontFamily: 'Mona Sans',
-                                        fontSize: 24.0,
-                                        letterSpacing: 0.0,
-                                      ),
-                                ),
+                                      .fold<int>(0, (sum, addOnCount) => sum + addOnCount)}',
+                                  style: FlutterFlowTheme.of(context).bodyMedium.override(
+                                    fontFamily: 'Mona Sans',
+                                    fontSize: 22.0,
+                                    fontWeight: FontWeight.w500,
+                                    letterSpacing: 0.0,
+                                  ),
+                                )
+                                ,
                               ],
                             ),
                           ),
@@ -569,7 +570,7 @@ class _ScannerSummaryWidgetState extends State<ScannerSummaryWidget>
                       ),
                       Padding(
                         padding:
-                            EdgeInsetsDirectional.fromSTEB(0.0, 20.0, 0.0, 0.0),
+                            EdgeInsetsDirectional.fromSTEB(0.0, 8.0, 0.0, 0.0),
                         child: Container(
                           width: MediaQuery.sizeOf(context).width * 1.0,
                           decoration: BoxDecoration(
@@ -607,24 +608,24 @@ class _ScannerSummaryWidgetState extends State<ScannerSummaryWidget>
                                   ),
                                 ),
                                 Text(
-                                  _model.attendees
+                                  '\$${_model.attendees
                                       .expand((attendee) => attendee.addOns)
                                       .fold<double>(
-                                  0.0,
-                                  (sum, addOn) {
-                                    final price =
-                                        double.tryParse(addOn.price.toString()) ??
-                                            0.0;
-                                    return sum + price;
-                                  },
-                                ).toStringAsFixed(0),
+                                    0.0,
+                                        (sum, addOn) {
+                                      final price =
+                                          double.tryParse(addOn.price.toString()) ?? 0.0;
+                                      return sum + price;
+                                    },
+                                  )
+                                      .toStringAsFixed(2)}',
                                   style: FlutterFlowTheme.of(context)
                                       .bodyMedium
                                       .override(
-                                        fontFamily: 'Mona Sans',
-                                        fontSize: 24.0,
-                                        letterSpacing: 0.0,
-                                      ),
+                                    fontFamily: 'Mona Sans',
+                                    fontSize: 22.0,
+                                    fontWeight: FontWeight.w500,                                    letterSpacing: 0.0,
+                                  ),
                                 ),
                               ],
                             ),

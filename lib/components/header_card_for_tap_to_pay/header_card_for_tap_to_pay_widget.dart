@@ -44,6 +44,7 @@ class _HeaderCardForTapToPayWidgetState
 
   @override
   Widget build(BuildContext context) {
+
     return Column(
       mainAxisSize: MainAxisSize.max,
       crossAxisAlignment: CrossAxisAlignment.stretch,

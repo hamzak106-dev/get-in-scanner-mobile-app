@@ -1,3 +1,4 @@
+import 'package:g_e_t_i_n_scanner/components/sync/sync__widget_2.dart';
 import 'package:g_e_t_i_n_scanner/custom_code/actions/index.dart';
 
 import '../../../custom_code/actions/init_power_sync.dart';
@@ -79,7 +80,7 @@ class _SummaryScreenWidgetState extends State<SummaryScreenWidget> {
                   wrapWithModel(
                     model: _model.syncModel,
                     updateCallback: () => safeSetState(() {}),
-                    child: SyncWidget(),
+                    child: SyncWidget2(),
                   ),
                 ].divide(SizedBox(width: 10.0)),
               ),
