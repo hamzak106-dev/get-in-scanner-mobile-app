@@ -109,9 +109,6 @@ class _SyncWidgetState extends State<SyncWidget2> with TickerProviderStateMixin{
                 borderRadius: BorderRadius.circular(30),
                 onTap: () async {
                   logFirebaseEvent('SYNC_COMP_icRefresh_ICN_ON_TAP');
-                  print("Total ticket summary ${widget.summaryScreenModel.ticketSummary}");
-                  print("Total Device summary ${widget.summaryScreenModel.deviceSummary}");
-
                   await showModalBottomSheet(
                     context: context,
                     isScrollControlled: true,

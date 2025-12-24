@@ -5,15 +5,10 @@ import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:g_e_t_i_n_scanner/backend/supabase/database/tables/events.dart';
 import 'package:g_e_t_i_n_scanner/components/export_cv/downloaded_csv_card.dart';
-import 'package:g_e_t_i_n_scanner/components/screen_component/scanner_summary/scanner_summary_model.dart';
 import 'package:g_e_t_i_n_scanner/flutter_flow/flutter_flow_util.dart';
 import 'package:path_provider/path_provider.dart';
-import 'package:share_plus/share_plus.dart';
-import 'package:url_launcher/url_launcher.dart';
 import '../../app_state.dart';
 import '../../backend/schema/structs/summary_struct.dart';
-import '../../custom_code/actions/watch_by_ticket_summary.dart' as actions;
-import '../../flutter_flow/custom_functions.dart' as functions;
 import '../../flutter_flow/flutter_flow_theme.dart';
 import '/custom_code/actions/index.dart' as actions;
 

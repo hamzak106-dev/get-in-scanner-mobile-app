@@ -1,9 +1,5 @@
-import 'package:flutter_svg/svg.dart';
 import 'package:g_e_t_i_n_scanner/components/summary_card/summary_card_device_widget.dart';
-
-import '../../../pages/home_screens/add_ons_list_screen/add_ons_list_screen_widget.dart';
 import '../../../pages/home_screens/attendees_detail_screen/attendees_detail_screen_model.dart';
-import '../../attendee_detail_tile/attendee_detail_tile_widget.dart';
 import '/backend/schema/enums/enums.dart';
 import '/backend/schema/structs/index.dart';
 import '/backend/supabase/supabase.dart';
@@ -347,7 +343,6 @@ class _ScannerSummaryWidgetState extends State<ScannerSummaryWidget>
                         return Builder(
                           builder: (context) {
                             final ticketData = _model.ticketSummary.toList();
-                            print("total Ticket summary data ${ticketData.length}");
                             if (ticketData.isEmpty) {
                               return Center(
                                 child: NoDataFoundWidget(),
@@ -355,7 +350,7 @@ class _ScannerSummaryWidgetState extends State<ScannerSummaryWidget>
                             }
 
                             return ListView.separated(
-                              padding: EdgeInsets.zero,
+                              padding: const EdgeInsets.only(bottom: 40.0),
                               primary: false,
                               shrinkWrap: true,
                               scrollDirection: Axis.vertical,
@@ -398,41 +393,38 @@ class _ScannerSummaryWidgetState extends State<ScannerSummaryWidget>
                                 child: NoDataFoundWidget(),
                               );
                             }
-                            return Padding(
-                              padding: const EdgeInsets.only(bottom: 40),
-                              child: ListView.separated(
-                                padding: EdgeInsets.zero,
-                                primary: false,
-                                shrinkWrap: true,
-                                scrollDirection: Axis.vertical,
-                                itemCount: deviceData.length,
-                                separatorBuilder: (_, __) =>
-                                    SizedBox(height: 20.0),
-                                itemBuilder: (context, deviceDataIndex) {
-                                  final deviceDataItem =
-                                      deviceData[deviceDataIndex];
-                                  return wrapWithModel(
-                                    model: _model.summaryCardModels1.getModel(
-                                      deviceDataIndex.toString(),
-                                      deviceDataIndex,
+                            return ListView.separated(
+                              padding: EdgeInsets.zero,
+                              primary: false,
+                              shrinkWrap: true,
+                              scrollDirection: Axis.vertical,
+                              itemCount: deviceData.length,
+                              separatorBuilder: (_, __) =>
+                                  SizedBox(height: 20.0),
+                              itemBuilder: (context, deviceDataIndex) {
+                                final deviceDataItem =
+                                    deviceData[deviceDataIndex];
+                                return wrapWithModel(
+                                  model: _model.summaryCardModels1.getModel(
+                                    deviceDataIndex.toString(),
+                                    deviceDataIndex,
+                                  ),
+                                  updateCallback: () => safeSetState(() {}),
+                                  child: SummaryCardDeviceWidget(
+                                    key: Key(
+                                      'Keymfp_${deviceDataIndex.toString()}',
                                     ),
-                                    updateCallback: () => safeSetState(() {}),
-                                    child: SummaryCardDeviceWidget(
-                                      key: Key(
-                                        'Keymfp_${deviceDataIndex.toString()}',
-                                      ),
-                                      icon: Icon(
-                                        FFIcons.kicMobile,
-                                        color: FlutterFlowTheme.of(context)
-                                            .primaryText,
-                                        size: 20.0,
-                                      ),
-                                      summary: deviceDataItem,
-                                      eventIds: widget.event!.map((e) => e.eventId).toList(),
+                                    icon: Icon(
+                                      FFIcons.kicMobile,
+                                      color: FlutterFlowTheme.of(context)
+                                          .primaryText,
+                                      size: 20.0,
                                     ),
-                                  );
-                                },
-                              ),
+                                    summary: deviceDataItem,
+                                    eventIds: widget.event!.map((e) => e.eventId).toList(),
+                                  ),
+                                );
+                              },
                             );
                           },
                         );
