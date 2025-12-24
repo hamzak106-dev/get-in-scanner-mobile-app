@@ -347,6 +347,7 @@ class _ScannerSummaryWidgetState extends State<ScannerSummaryWidget>
                         return Builder(
                           builder: (context) {
                             final ticketData = _model.ticketSummary.toList();
+                            print("total Ticket summary data ${ticketData.length}");
                             if (ticketData.isEmpty) {
                               return Center(
                                 child: NoDataFoundWidget(),

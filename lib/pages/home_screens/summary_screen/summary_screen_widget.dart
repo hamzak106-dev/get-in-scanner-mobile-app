@@ -80,7 +80,8 @@ class _SummaryScreenWidgetState extends State<SummaryScreenWidget> {
                   wrapWithModel(
                     model: _model.syncModel,
                     updateCallback: () => safeSetState(() {}),
-                    child: SyncWidget2(),
+                    child: SyncWidget2(summaryScreenModel:   _model.scannerSummaryModel,
+                    ),
                   ),
                 ].divide(SizedBox(width: 10.0)),
               ),

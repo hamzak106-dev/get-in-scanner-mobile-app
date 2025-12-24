@@ -1,5 +1,9 @@
 import 'package:flutter_svg/svg.dart';
+import 'package:g_e_t_i_n_scanner/components/screen_component/scanner_summary/scanner_summary_model.dart';
+import 'package:g_e_t_i_n_scanner/pages/home_screens/summary_screen/summary_screen_model.dart';
 
+import '../../backend/supabase/database/tables/attendee.dart';
+import '../export_cv/import_sheet_card.dart';
 import '/components/dialogs/info_dialog/info_dialog_widget.dart';
 import '/flutter_flow/flutter_flow_theme.dart';
 import '/flutter_flow/flutter_flow_util.dart';
@@ -12,14 +16,17 @@ import 'sync_model.dart';
 export 'sync_model.dart';
 
 class SyncWidget2 extends StatefulWidget {
-  const SyncWidget2({super.key});
+  final ScannerSummaryModel summaryScreenModel;
+
+  const SyncWidget2({super.key, required this.summaryScreenModel});
 
   @override
   State<SyncWidget2> createState() => _SyncWidgetState();
 }
 
-class _SyncWidgetState extends State<SyncWidget2> {
+class _SyncWidgetState extends State<SyncWidget2> with TickerProviderStateMixin{
   late SyncModel _model;
+  late final AnimationController _exportSheetController;
 
   @override
   void setState(VoidCallback callback) {
@@ -31,6 +38,11 @@ class _SyncWidgetState extends State<SyncWidget2> {
   void initState() {
     super.initState();
     _model = createModel(context, () => SyncModel());
+    _exportSheetController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 300),
+      reverseDuration: const Duration(milliseconds: 300),
+    );
   }
 
   @override
@@ -97,62 +109,19 @@ class _SyncWidgetState extends State<SyncWidget2> {
                 borderRadius: BorderRadius.circular(30),
                 onTap: () async {
                   logFirebaseEvent('SYNC_COMP_icRefresh_ICN_ON_TAP');
+                  print("Total ticket summary ${widget.summaryScreenModel.ticketSummary}");
+                  print("Total Device summary ${widget.summaryScreenModel.deviceSummary}");
 
-                  if (FFAppState().syncStatus.downloading) {
-                    await showDialog(
-                      context: context,
-                      builder: (dialogContext) {
-                        return Dialog(
-                          elevation: 0,
-                          insetPadding: EdgeInsets.zero,
-                          backgroundColor: Colors.transparent,
-                          alignment: AlignmentDirectional(0.0, 0.0)
-                              .resolve(Directionality.of(context)),
-                          child: InfoDialogWidget(
-                            title: 'Checking Updates.....',
-                            isLight: true,
-                            firstTap: () async {
-                              Navigator.pop(context);
-                            },
-                          ),
-                        );
-                      },
-                    );
-                  } else {
-                    _model.lastSyncAt = await actions.powersyncLastSyncAt();
-                    if ((_model.lastSyncAt != null) &&
-                        (_model.lastSyncAt!.secondsSinceEpoch <
-                            (getCurrentTimestamp.secondsSinceEpoch - 30))) {
-                      _model.isLoading = !_model.isLoading;
-                      safeSetState(() {});
-                      await action_blocks.syncData(context);
-                      _model.isLoading = !_model.isLoading;
-                      safeSetState(() {});
-                    } else {
-                      await showDialog(
-                        context: context,
-                        builder: (dialogContext) {
-                          return Dialog(
-                            elevation: 0,
-                            insetPadding: EdgeInsets.zero,
-                            backgroundColor: Colors.transparent,
-                            alignment: AlignmentDirectional(0.0, 0.0)
-                                .resolve(Directionality.of(context)),
-                            child: InfoDialogWidget(
-                              title: 'No sync necessary',
-                              isLight: true,
-                              subTitle: 'The device is up to date.',
-                              firstBtnText: 'OK',
-                              firstBtnColor: FlutterFlowTheme.of(context).accent3,
-                              firstTap: () async {
-                                Navigator.pop(context);
-                              },
-                            ),
-                          );
-                        },
-                      );
-                    }
-                  }
+                  await showModalBottomSheet(
+                    context: context,
+                    isScrollControlled: true,
+                    backgroundColor: Colors.transparent,
+                    barrierColor: Colors.black.withOpacity(0.4),
+                    transitionAnimationController: _exportSheetController,
+                    builder: (_) {
+                      return  NewImportCard( scannerSummaryModel: widget.summaryScreenModel,);
+                    },
+                  );
 
                   safeSetState(() {});
                 },
