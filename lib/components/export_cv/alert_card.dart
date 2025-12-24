@@ -12,12 +12,9 @@ import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../app_state.dart';
 import '../../backend/schema/structs/summary_struct.dart';
-import '../../backend/supabase/database/tables/attendee.dart';
-import '../../custom_code/actions/watch_by_device_summary.dart';
 import '../../custom_code/actions/watch_by_ticket_summary.dart' as actions;
 import '../../flutter_flow/custom_functions.dart' as functions;
 import '../../flutter_flow/flutter_flow_theme.dart';
-import 'package:g_e_t_i_n_scanner/components/export_cv/alert_card.dart';
 import '/custom_code/actions/index.dart' as actions;
 
 class AlertCard extends StatefulWidget {
@@ -44,8 +41,8 @@ class _AlertCardState extends State<AlertCard> with TickerProviderStateMixin{
   late final AnimationController _exportSheetController;
   final List<String> summaryHeaders = [
     'type',
+    'id',
     'name',
-    'value',
     'total_checkins',
     'total_checkouts',
     'total_attendees',
@@ -67,7 +64,7 @@ class _AlertCardState extends State<AlertCard> with TickerProviderStateMixin{
 
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       if (!FFAppState().isOnline) {
-        debugPrint('❌ No internet → timer not started');
+        debugPrint('No internet → timer not started');
         return;
       }
 
@@ -82,7 +79,7 @@ class _AlertCardState extends State<AlertCard> with TickerProviderStateMixin{
     _timer = Timer.periodic(const Duration(seconds: 1), (_) {
       final elapsed = _stopwatch.elapsed.inSeconds;
 
-      setState(() {
+      safeSetState(() {
         secondsElapsed = elapsed;
 
         if (progress > 0) {
@@ -96,7 +93,7 @@ class _AlertCardState extends State<AlertCard> with TickerProviderStateMixin{
     });
   }
   void _updateProgress(int value) {
-    setState(() {
+    safeSetState(() {
       progress = value;
     });
   }
@@ -112,7 +109,7 @@ class _AlertCardState extends State<AlertCard> with TickerProviderStateMixin{
     }
 
     debugPrint(
-      '🟢 Summary ready → '
+      'Summary ready → '
           'tickets=${_ticketSummary.length}, '
           'devices=${_deviceSummary.length}',
     );
@@ -142,21 +139,6 @@ class _AlertCardState extends State<AlertCard> with TickerProviderStateMixin{
     await actions.watchByTicketSummary(
           (ticketsSummary) async {
         _ticketSummary = ticketsSummary!.toList().cast<SummaryStruct>();
-
-        debugPrint('🎟️ Ticket Summary COUNT: ${_ticketSummary.length}');
-        for (final s in _ticketSummary) {
-          debugPrint(
-            '🎟️ [TICKET] '
-                'name=${s.name}, '
-                'value=${s.value}, '
-                'checkins=${s.totalCheckins}, '
-                'checkouts=${s.totalCheckouts}, '
-                'attendees=${s.totalAttendees}, '
-                'absent=${s.totalAbsent}, '
-                'logs=${s.totalLogs}',
-          );
-        }
-
         safeSetState(() {});
       },
       widget.event!.map((e) => e.eventId).toList(),
@@ -176,7 +158,6 @@ class _AlertCardState extends State<AlertCard> with TickerProviderStateMixin{
   // ================= CSV EXPORT =================
 
   Future<void> _startCsvDownload() async {
-    debugPrint('🚀 Summary CSV export started');
 
     /// 🔹 Load ALL summaries first
     await _loadSummariesFromEvent();
@@ -187,8 +168,8 @@ class _AlertCardState extends State<AlertCard> with TickerProviderStateMixin{
     for (final s in _ticketSummary) {
       allRows.add([
         'ticket',
-        s.name,
         s.value.toString(),
+        s.name,
         s.totalCheckins.toString(),
         s.totalCheckouts.toString(),
         s.totalAttendees.toString(),
@@ -201,8 +182,8 @@ class _AlertCardState extends State<AlertCard> with TickerProviderStateMixin{
     for (final s in _deviceSummary) {
       allRows.add([
         'device',
-        s.name,
         s.value.toString(),
+        s.name,
         s.totalCheckins.toString(),
         s.totalCheckouts.toString(),
         s.totalAttendees.toString(),
