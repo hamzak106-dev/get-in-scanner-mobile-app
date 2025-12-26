@@ -38,6 +38,14 @@ class _ScannerSummaryWidgetState extends State<ScannerSummaryWidget>
     _model.onUpdate();
   }
 
+
+  bool isToday(DateTime date) {
+    final now = DateTime.now();
+    return date.year == now.year &&
+        date.month == now.month &&
+        date.day == now.day;
+  }
+
   @override
   void initState() {
     super.initState();
@@ -394,7 +402,7 @@ class _ScannerSummaryWidgetState extends State<ScannerSummaryWidget>
                               );
                             }
                             return ListView.separated(
-                              padding: EdgeInsets.zero,
+                              padding: const EdgeInsets.only(bottom: 40.0),
                               primary: false,
                               shrinkWrap: true,
                               scrollDirection: Axis.vertical,
@@ -485,19 +493,40 @@ class _ScannerSummaryWidgetState extends State<ScannerSummaryWidget>
                                   updateCallback: () => safeSetState(() {}),
                                   child: Text(
                                     '\$${_model.attendees
-                                        .where((att) => att.status == ScanResult.CHECK_IN.name)
-                                        .fold<int>(
-                                      0,
-                                          (count, att) => count + att.addOns.length,
+                                        .where((att) =>
+                                    att.status == ScanResult.CHECK_IN.name &&
+                                        att.updatedAt != null &&
+                                        isToday(att.updatedAt!))
+                                        .expand((att) => att.addOns)
+                                        .fold<double>(
+                                      0.0,
+                                          (sum, addOn) =>
+                                      sum + (double.tryParse(addOn.price.toString()) ?? 0.0),
                                     )
-                                        .toDouble()
                                         .toStringAsFixed(2)}',
                                     style: FlutterFlowTheme.of(context).bodyMedium.override(
                                       fontFamily: 'Mona Sans',
                                       fontSize: 22.0,
-                                      fontWeight: FontWeight.w500,                                      letterSpacing: 0.0,
+                                      fontWeight: FontWeight.w500,
+                                      letterSpacing: 0.0,
                                     ),
-                                  ),
+                                  )
+
+                                  // Text(
+                                  //   '\$${_model.attendees
+                                  //       .where((att) => att.status == ScanResult.CHECK_IN.name)
+                                  //       .fold<int>(
+                                  //     0,
+                                  //         (count, att) => count + att.addOns.length,
+                                  //   )
+                                  //       .toDouble()
+                                  //       .toStringAsFixed(2)}',
+                                  //   style: FlutterFlowTheme.of(context).bodyMedium.override(
+                                  //     fontFamily: 'Mona Sans',
+                                  //     fontSize: 22.0,
+                                  //     fontWeight: FontWeight.w500,                                      letterSpacing: 0.0,
+                                  //   ),
+                                  // ),
 
                                 ),
                               ],

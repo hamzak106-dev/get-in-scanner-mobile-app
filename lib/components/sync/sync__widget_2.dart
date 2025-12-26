@@ -3,7 +3,7 @@ import 'package:g_e_t_i_n_scanner/components/screen_component/scanner_summary/sc
 import 'package:g_e_t_i_n_scanner/pages/home_screens/summary_screen/summary_screen_model.dart';
 
 import '../../backend/supabase/database/tables/attendee.dart';
-import '../export_cv/import_sheet_card.dart';
+import '../export_csv/import_sheet_card.dart';
 import '/components/dialogs/info_dialog/info_dialog_widget.dart';
 import '/flutter_flow/flutter_flow_theme.dart';
 import '/flutter_flow/flutter_flow_util.dart';

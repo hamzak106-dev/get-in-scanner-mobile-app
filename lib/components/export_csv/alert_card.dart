@@ -4,13 +4,12 @@ import 'package:csv/csv.dart';
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:g_e_t_i_n_scanner/backend/supabase/database/tables/events.dart';
-import 'package:g_e_t_i_n_scanner/components/export_cv/downloaded_csv_card.dart';
 import 'package:g_e_t_i_n_scanner/flutter_flow/flutter_flow_util.dart';
 import 'package:path_provider/path_provider.dart';
-import '../../app_state.dart';
 import '../../backend/schema/structs/summary_struct.dart';
 import '../../flutter_flow/flutter_flow_theme.dart';
 import '/custom_code/actions/index.dart' as actions;
+import 'downloaded_csv_card.dart';
 
 class AlertCard extends StatefulWidget {
   final List<EventsRow>? event;

@@ -1,10 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/svg.dart';
 import 'package:g_e_t_i_n_scanner/components/screen_component/scanner_summary/scanner_summary_model.dart';
-
 import '../../app_state.dart';
 import '../../backend/schema/structs/summary_struct.dart';
-import '../../backend/supabase/database/tables/attendee.dart';
 import '../../flutter_flow/custom_functions.dart' as functions;
 import '../../flutter_flow/flutter_flow_theme.dart';
 import 'alert_card.dart';
@@ -93,11 +90,10 @@ class _NewImportCardState extends State<NewImportCard> {
                     ),
                 WidgetSpan(
                   alignment: PlaceholderAlignment.middle,
-                  child: SvgPicture.asset(
-                    'assets/svg/csv_document.svg',
+                  child: Image.asset(
+                    'assets/icons/csv_document_icon.png',
                     width: 16,
                     height: 16,
-
                   ),
                 ),
                     const TextSpan(

@@ -1,8 +1,5 @@
-
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import 'package:open_file/open_file.dart';
-import '../../custom_code/actions/start_multicast.dart' as FilePicker;
 import '../../flutter_flow/flutter_flow_theme.dart';
 
 class DownloadedCsvCard extends StatelessWidget {
@@ -52,12 +49,12 @@ class DownloadedCsvCard extends StatelessWidget {
               padding: const EdgeInsets.only(top: 30,bottom: 15),
               child: Text(
                 'Hurray!',
-                style: theme.titleMedium.override(
+                style: theme.titleLarge.override(
                   fontFamily: 'MonaSans',
                   color: Colors.black,
                   fontWeight: FontWeight.w600,
                   letterSpacing: 0.16,
-                  lineHeight: 1.5
+                  fontSize: 16,
                 ),
               ),
             ),
@@ -69,6 +66,8 @@ class DownloadedCsvCard extends StatelessWidget {
               style: theme.bodySmall.override(
                 fontFamily: 'MonaSans',
                 color: Colors.black,
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
                 letterSpacing: 0.5,
               ),
               textAlign: TextAlign.center,
@@ -76,11 +75,14 @@ class DownloadedCsvCard extends StatelessWidget {
 
 
             /// Illustration
-            SizedBox(
-              height: 142,
-              child: SvgPicture.asset(
-                'assets/svg/downloaded.svg',
-                fit: BoxFit.contain,
+            Padding(
+              padding: const EdgeInsets.only(top: 15),
+              child: SizedBox(
+                height: 142,
+                child: Image.asset(
+                  'assets/images/download_document.png',
+                  fit: BoxFit.contain,
+                ),
               ),
             ),
 
@@ -105,7 +107,7 @@ class DownloadedCsvCard extends StatelessWidget {
               ),
             ),
 
-            const SizedBox(height: 28),
+            const SizedBox(height: 25),
 
             /// OPEN NOW
             SizedBox(
@@ -138,7 +140,7 @@ class DownloadedCsvCard extends StatelessWidget {
               ),
             ),
 
-            const SizedBox(height: 12),
+            const SizedBox(height: 10),
 
             /// SKIP FOR NOW
             SizedBox(
