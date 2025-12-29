@@ -28,7 +28,7 @@ class _AlertCardState extends State<AlertCard> with TickerProviderStateMixin{
   int progress = 0; // 0 → 100
   int secondsElapsed = 0;
   int estimatedSecondsLeft = 0;
-  int secondsLeft = 0; // ✅ ADD THIS
+  int secondsLeft = 0;
   bool _isInternetAvailable = false;
 
 

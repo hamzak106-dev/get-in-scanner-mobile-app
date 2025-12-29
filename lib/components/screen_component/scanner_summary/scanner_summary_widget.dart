@@ -1,5 +1,6 @@
 import 'package:g_e_t_i_n_scanner/components/summary_card/summary_card_device_widget.dart';
 import '../../../pages/home_screens/attendees_detail_screen/attendees_detail_screen_model.dart';
+import '../../event_seating/not_selected_info_card.dart';
 import '/backend/schema/enums/enums.dart';
 import '/backend/schema/structs/index.dart';
 import '/backend/supabase/supabase.dart';

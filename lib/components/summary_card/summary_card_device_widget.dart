@@ -58,8 +58,21 @@ class _SummaryCardDeviceWidgetState extends State<SummaryCardDeviceWidget> {
     });
 
     try {
+      for (final eventId in widget.eventIds) {
+        debugPrint('Fetching tickets for Event ID: $eventId');
+      }
+
       final deviceId = widget.summary!.value;
+      print("Your Device ID ${deviceId}");
+
       final results = await actions.getDeviceTickets(deviceId, widget.eventIds);
+
+      for (int i = 0; i < results.length; i++) {
+        debugPrint('--- Ticket $i ---');
+        results[i].forEach((key, value) {
+          debugPrint('$key : $value');
+        });
+      }
       setState(() {
         _deviceTickets = results;
         _isLoading = false;
@@ -148,7 +161,8 @@ class _SummaryCardDeviceWidgetState extends State<SummaryCardDeviceWidget> {
           else
             ..._deviceTickets.map((ticket) {
               final ticketName = ticket['ticket_name']?.toString() ?? '-';
-              final deviceCount = ticket['device_count']?.toString() ?? '0';
+              final scanCount = ticket['scan_count']?.toString() ?? '0';
+
               return Container(
                 margin: EdgeInsets.only(bottom: 8.0),
                 padding: EdgeInsets.all(12.0),
@@ -182,7 +196,7 @@ class _SummaryCardDeviceWidgetState extends State<SummaryCardDeviceWidget> {
                       ),
                       SizedBox(width: 8.0),
                       Text(
-                        deviceCount,
+                        scanCount,
                         style: FlutterFlowTheme.of(context).bodyMedium.override(
                               fontFamily: 'Mona Sans',
                               letterSpacing: 0.0,
