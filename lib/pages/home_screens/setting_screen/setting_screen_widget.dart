@@ -4,6 +4,8 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:g_e_t_i_n_scanner/components/card_scanning/card_scanning_widget.dart'
     show CardScanningWidget;
+import 'package:g_e_t_i_n_scanner/components/setting/splash_setting_widget.dart';
+import 'package:g_e_t_i_n_scanner/components/setting_tile/setting_tile_widget_2.dart';
 import 'package:provider/provider.dart';
 
 import '/actions/actions.dart' as action_blocks;
@@ -699,6 +701,53 @@ class _SettingScreenWidgetState extends State<SettingScreenWidget>
                                 onTap: () async {},
                               ),
                             ),
+                          wrapWithModel(
+                            model: _model.settingTileModel13,
+                            updateCallback: () => safeSetState(() {}),
+                            child: SettingTileWidget2(
+                              iconPath: "assets/svg/magic-star.svg",
+                              title: 'Splash Screen',
+                              endLable: FFAppState().splashScreenStatus,
+                              showTrailingIcon: true,
+                              onTap: () async {
+                                        context.pushNamed(SplashSettingWidget.routeName);
+
+                                // logFirebaseEvent('SETTING_SCREEN_SPLASH_SCREEN_TILE_ON_TAP');
+                                //
+                                // final newStatus = FFAppState().splashScreenStatus == 'Enabled' ? 'Disabled' : 'Enabled';
+                                //
+                                // showDialog(
+                                //   context: context,
+                                //   builder: (dialogContext) {
+                                //     return AlertDialog(
+                                //       title: Text('Change Splash Screen'),
+                                //       content: Text('Are you sure you want to $newStatus the splash screen for future loads?'),
+                                //       actions: [
+                                //         TextButton(
+                                //           onPressed: () {
+                                //             Navigator.pop(dialogContext); // close dialog
+                                //           },
+                                //           child: Text('Cancel'),
+                                //         ),
+                                //         TextButton(
+                                //           onPressed: () {
+                                //             FFAppState().splashScreenStatus = newStatus;
+                                //             safeSetState(() {}); // update UI
+                                //             Navigator.pop(dialogContext); // close dialog
+                                //           },
+                                //           child: Text('Confirm'),
+                                //         ),
+                                //       ],
+                                //     );
+                                //   },
+                                // );
+
+
+                              },
+                            ),
+                          ),
+
+
                         ],
                       ),
                       if ((FFAppState().user.profile == Profile.admin) ||

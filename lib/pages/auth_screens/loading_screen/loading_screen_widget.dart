@@ -5,7 +5,7 @@ import '/flutter_flow/flutter_flow_util.dart';
 import '/custom_code/actions/index.dart' as actions;
 import '/flutter_flow/custom_functions.dart' as functions;
 import '/index.dart';
-import 'package:rive/rive.dart' hide LinearGradient;
+import 'package:rive/rive.dart' hide LinearGradient, Image;
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -32,6 +32,104 @@ class _LoadingScreenWidgetState extends State<LoadingScreenWidget> {
   late LoadingScreenModel _model;
 
   final scaffoldKey = GlobalKey<ScaffoldState>();
+  void _showSplashChoiceDialog() {
+    // Mark as seen immediately
+    FFAppState().hasSeenSplashPrompt = true;
+
+    showDialog(
+      context: context,
+      barrierDismissible: false, // user must choose
+      builder: (context) {
+        return Center(
+          child: Material(
+            color: Colors.transparent,
+            child: Container(
+              width: 300, // fixed width for dialog
+              padding: const EdgeInsets.all(20.0),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(12.0),
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Text(
+                    "Would you like to see the splash animation in future app launches?",
+                    textAlign: TextAlign.center,
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+                  ),
+                  const SizedBox(height: 20),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: TextButton(
+                          onPressed: () {
+                            FFAppState().splashScreenStatus = 'Disabled';
+                            Navigator.pop(context);
+                            _proceedAfterSplashChoice();
+                          },
+                          child: const Text("No",
+                          style: TextStyle(
+                            color: Colors.red
+                          ),),
+                        ),
+                      ),
+                      const SizedBox(width: 20),
+                      Expanded(
+                        child: TextButton(
+                          onPressed: () {
+                            FFAppState().splashScreenStatus = 'Enabled';
+                            Navigator.pop(context);
+                            _proceedAfterSplashChoice();
+                          },
+                          child:  Text("Yes",
+                          style: TextStyle(
+                            color: Colors.green.shade800,
+                            fontWeight: FontWeight.w700
+                          ),),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  void _proceedAfterSplashChoice() async {
+    // Show logo briefly if you want
+    await Future.delayed(const Duration(seconds: 2));
+
+    if (functions.checkJson(FFAppState().user.toMap()) &&
+        (FFAppState().user.userId != 0)) {
+      await updateDeviceAppVersion();
+      context.goNamed(DashBoardScreenWidget.routeName);
+    } else {
+      context.goNamed(LoginScreenWidget.routeName);
+    }
+  }
+
+  Future<void> _handleSplashAndNavigation() async {
+    // Show splash animation if enabled
+    if (!widget.avoidWaiting && FFAppState().splashScreenStatus == 'Enabled') {
+      await Future.delayed(const Duration(milliseconds: 5500));
+    }
+
+    // Navigate to the correct page
+    if (functions.checkJson(FFAppState().user.toMap()) &&
+        (FFAppState().user.userId != 0)) {
+      await updateDeviceAppVersion();
+      context.goNamed(DashBoardScreenWidget.routeName);
+    } else {
+      context.goNamed(LoginScreenWidget.routeName);
+    }
+  }
+
+
 
   @override
   void initState() {
@@ -41,10 +139,11 @@ class _LoadingScreenWidgetState extends State<LoadingScreenWidget> {
     logFirebaseEvent('screen_view', parameters: {'screen_name': 'LoadingScreen'});
     // On page load action.
     SchedulerBinding.instance.addPostFrameCallback((_) async {
-      logFirebaseEvent('LOADING_SCREEN_LoadingScreen_ON_INIT_STA');
-      if (!widget.avoidWaiting) {
-        await Future.delayed(const Duration(milliseconds: 5500));
+      if (!FFAppState().hasSeenSplashPrompt) {
+        FFAppState().hasSeenSplashPrompt = true;
+        _showSplashChoiceDialog();
       }
+      await _handleSplashAndNavigation();
       await actions.getDeviceId();
       if (functions.checkJson(FFAppState().user.toMap()) && (FFAppState().user.userId != 0)) {
         await updateDeviceAppVersion();
@@ -56,12 +155,16 @@ class _LoadingScreenWidgetState extends State<LoadingScreenWidget> {
     });
   }
 
+
+
   @override
   void dispose() {
     _model.dispose();
 
     super.dispose();
   }
+
+
 
   @override
   Widget build(BuildContext context) {
@@ -72,6 +175,8 @@ class _LoadingScreenWidgetState extends State<LoadingScreenWidget> {
       backgroundColor: FlutterFlowTheme.of(context).primaryBackground,
       body: Stack(
         children: [
+          // Only show Rive animation if splash is enabled
+          if (FFAppState().splashScreenStatus == 'Enabled')
           Container(
             width: double.infinity,
             height: double.infinity,

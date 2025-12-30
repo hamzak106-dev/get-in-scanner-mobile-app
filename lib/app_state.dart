@@ -22,6 +22,19 @@ class FFAppState extends ChangeNotifier {
   Future initializePersistedState() async {
     prefs = await SharedPreferences.getInstance();
     _safeInit(() {
+      _hasSeenSplashPrompt = prefs.getBool('ff_hasSeenSplashPrompt') ?? false;
+    });
+
+
+    _safeInit(() {
+      if (prefs.containsKey('ff_splashScreenStatus')) {
+        _splashScreenStatus = prefs.getString('ff_splashScreenStatus') ?? 'Enabled';
+      }
+    });
+
+    _safeInit(() {
+
+
       if (prefs.containsKey('ff_user')) {
         try {
           final serializedData = prefs.getString('ff_user') ?? '{}';
@@ -40,6 +53,28 @@ class FFAppState extends ChangeNotifier {
       _hasFirstSync = prefs.getBool('ff_hasFirstSync') ?? _hasFirstSync;
     });
   }
+
+  // Default splash screen status
+  String _splashScreenStatus = 'Enabled';
+
+  String get splashScreenStatus => _splashScreenStatus;
+
+  set splashScreenStatus(String value) {
+    _splashScreenStatus = value;
+    prefs.setString('ff_splashScreenStatus', value);
+    notifyListeners();
+  }
+
+  // In FFAppState
+  bool _hasSeenSplashPrompt = false;
+
+  bool get hasSeenSplashPrompt => _hasSeenSplashPrompt;
+
+  set hasSeenSplashPrompt(bool value) {
+    _hasSeenSplashPrompt = value;
+    prefs.setBool('ff_hasSeenSplashPrompt', value);
+  }
+
 
   void update(VoidCallback callback) {
     callback();
@@ -181,6 +216,7 @@ void _safeInit(Function() initializeField) {
     initializeField();
   } catch (_) {}
 }
+
 
 Future _safeInitAsync(Function() initializeField) async {
   try {

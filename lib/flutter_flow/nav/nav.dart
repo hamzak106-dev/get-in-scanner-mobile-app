@@ -3,12 +3,14 @@ import 'dart:developer';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:g_e_t_i_n_scanner/components/setting/splash_setting_widget.dart';
 import 'package:g_e_t_i_n_scanner/pages/home_screens/event_page_tickets/event_page_tickets_widget.dart'
     show EventPageTicketsWidget;
 import 'package:g_e_t_i_n_scanner/pages/home_screens/scanner_pos/feature_not_available.dart'
     show FeatureDisabledPage;
 import 'package:provider/provider.dart';
 
+import '../custom_functions.dart' as functions;
 import '/backend/schema/structs/index.dart';
 import '/backend/supabase/supabase.dart';
 import '/flutter_flow/flutter_flow_theme.dart';
@@ -71,24 +73,35 @@ GoRouter createRouter(AppStateNotifier appStateNotifier) => GoRouter(
           name: '_initialize',
           path: '/',
           builder: (context, _) {
-            context.watch<AppStateNotifier>();
-            log("From router.dart: Initializing app... $_");
-            return appStateNotifier.showSplashImage
-                ? Builder(
-                    builder: (context) => Container(
-                      color: FlutterFlowTheme.of(context).primaryBackground,
-                      child: Center(
-                        child: Image.asset(
-                          'assets/images/appLogo.png',
-                          width: 120.0,
-                          height: 120.0,
-                          fit: BoxFit.fill,
-                        ),
-                      ),
-                    ),
-                  )
-                :
-            LoadingScreenWidget();
+            Widget splashLogo = Container(
+              color: FlutterFlowTheme.of(context).primaryBackground,
+              child: Center(
+                child: Image.asset(
+                  'assets/images/appLogo.png',
+                  width: 120.0,
+                  height: 120.0,
+                  fit: BoxFit.fill,
+                ),
+              ),
+            );
+
+            // Always show splash logo first for 2 seconds
+            Future.microtask(() async {
+              await Future.delayed(const Duration(seconds: 3));
+
+              if (FFAppState().splashScreenStatus == 'Enabled') {
+                context.goNamed(LoadingScreenWidget.routeName);
+              } else {
+                if (functions.checkJson(FFAppState().user.toMap()) &&
+                    (FFAppState().user.userId != 0)) {
+                  context.goNamed(DashBoardScreenWidget.routeName);
+                } else {
+                  context.goNamed(LoginScreenWidget.routeName);
+                }
+              }
+            });
+
+            return splashLogo;
           },
         ),
         FFRoute(
@@ -351,6 +364,11 @@ GoRouter createRouter(AppStateNotifier appStateNotifier) => GoRouter(
           name: SelectProfileScreenWidget.routeName,
           path: SelectProfileScreenWidget.routePath,
           builder: (context, params) => SelectProfileScreenWidget(),
+        ),
+        FFRoute(
+          name: SplashSettingWidget.routeName,
+          path: SplashSettingWidget.routePath,
+          builder: (context, params) => SplashSettingWidget(),
         ),
         FFRoute(
           name: PinManagerEventsScreenWidget.routeName,
