@@ -711,43 +711,9 @@ class _SettingScreenWidgetState extends State<SettingScreenWidget>
                               showTrailingIcon: true,
                               onTap: () async {
                                         context.pushNamed(SplashSettingWidget.routeName);
-
-                                // logFirebaseEvent('SETTING_SCREEN_SPLASH_SCREEN_TILE_ON_TAP');
-                                //
-                                // final newStatus = FFAppState().splashScreenStatus == 'Enabled' ? 'Disabled' : 'Enabled';
-                                //
-                                // showDialog(
-                                //   context: context,
-                                //   builder: (dialogContext) {
-                                //     return AlertDialog(
-                                //       title: Text('Change Splash Screen'),
-                                //       content: Text('Are you sure you want to $newStatus the splash screen for future loads?'),
-                                //       actions: [
-                                //         TextButton(
-                                //           onPressed: () {
-                                //             Navigator.pop(dialogContext); // close dialog
-                                //           },
-                                //           child: Text('Cancel'),
-                                //         ),
-                                //         TextButton(
-                                //           onPressed: () {
-                                //             FFAppState().splashScreenStatus = newStatus;
-                                //             safeSetState(() {}); // update UI
-                                //             Navigator.pop(dialogContext); // close dialog
-                                //           },
-                                //           child: Text('Confirm'),
-                                //         ),
-                                //       ],
-                                //     );
-                                //   },
-                                // );
-
-
                               },
                             ),
                           ),
-
-
                         ],
                       ),
                       if ((FFAppState().user.profile == Profile.admin) ||
