@@ -9,6 +9,7 @@ class NotSelectedInfoCard extends StatelessWidget {
   final String price;
   final VoidCallback onSelect;
   final VoidCallback onDismiss;
+  final bool status;
 
   const NotSelectedInfoCard({
     super.key,
@@ -17,7 +18,7 @@ class NotSelectedInfoCard extends StatelessWidget {
     required this.seat,
     required this.price,
     required this.onSelect,
-    required this.onDismiss,
+    required this.onDismiss, required this.status,
   });
 
   @override
@@ -99,7 +100,7 @@ class NotSelectedInfoCard extends StatelessWidget {
             ),
 
             // Unassigned Text
-             Padding(
+            status? Padding(
               padding: EdgeInsets.symmetric(vertical: 16),
               child: Text(
                 "Unassigned",
@@ -112,14 +113,14 @@ class NotSelectedInfoCard extends StatelessWidget {
                 ),
 
               ),
-            ),
+            ):SizedBox.shrink(),
 
-             Divider(height: 1,
+            status?  Divider(height: 1,
                color:Colors.grey.shade300,
-            ),
+            ):SizedBox.shrink(),
 
             // Action Buttons
-            Row(
+           status? Row(
               children: [
                 Expanded(
                   child: TextButton(
@@ -165,6 +166,26 @@ class NotSelectedInfoCard extends StatelessWidget {
                   ),
                 ),
               ],
+            ):Padding(
+              padding: const EdgeInsets.only(top: 10),
+              child: Row(
+               mainAxisAlignment: MainAxisAlignment.center,
+               children: [
+                 Icon(Icons.cancel_outlined,
+                 color: FlutterFlowTheme.of(context).errorRed,),
+                 Padding(
+                   padding: const EdgeInsets.only(left: 8),
+                   child: Text("You can't use any more places",
+                   style: FlutterFlowTheme.of(context).bodyMedium.copyWith(
+                       fontFamily: 'MonaSans',
+                     color: FlutterFlowTheme.of(context).errorRed,
+                     fontSize: 16,
+                     fontWeight: FontWeight.w600
+                   )
+                     ,),
+                 )
+               ],
+                         ),
             ),
           ],
         ),

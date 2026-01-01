@@ -10,6 +10,7 @@ import 'package:g_e_t_i_n_scanner/pages/home_screens/scanner_pos/feature_not_ava
     show FeatureDisabledPage;
 import 'package:provider/provider.dart';
 
+import '../../components/event_seating/seatsio_seat_manager_widget.dart';
 import '../custom_functions.dart' as functions;
 import '/backend/schema/structs/index.dart';
 import '/backend/supabase/supabase.dart';
@@ -369,6 +370,11 @@ GoRouter createRouter(AppStateNotifier appStateNotifier) => GoRouter(
           name: SplashSettingWidget.routeName,
           path: SplashSettingWidget.routePath,
           builder: (context, params) => SplashSettingWidget(),
+        ),
+        FFRoute(
+          name: SeatsioSeatManagerWidget.routeName,
+          path: SeatsioSeatManagerWidget.routePath,
+          builder: (context, params) => SeatsioSeatManagerWidget(),
         ),
         FFRoute(
           name: PinManagerEventsScreenWidget.routeName,

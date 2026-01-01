@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:g_e_t_i_n_scanner/components/event_seating/seatsio_seat_manager_widget.dart';
 import 'package:provider/provider.dart';
 
 import '/backend/schema/enums/enums.dart';
@@ -589,34 +590,32 @@ class _AttendeesDetailScreenWidgetState
                                     crossAxisAlignment:
                                         CrossAxisAlignment.start,
                                     children: [
-                                      Flexible(
-                                        child: Row(
-                                          mainAxisSize: MainAxisSize.max,
-                                          mainAxisAlignment:
-                                              MainAxisAlignment.start,
-                                          children: [
-                                            Icon(
-                                              Icons.event_seat_outlined,
-                                              color:
-                                                  FlutterFlowTheme.of(context)
-                                                      .secondaryText,
-                                              size: 16.0,
-                                            ),
-                                            Text(
-                                              'Seat',
-                                              textAlign: TextAlign.start,
-                                              style:
-                                                  FlutterFlowTheme.of(context)
-                                                      .bodyMedium
-                                                      .override(
-                                                        fontFamily: 'MonaSans',
-                                                        letterSpacing: 0.0,
-                                                      ),
-                                            ),
-                                          ].divide(SizedBox(width: 10.0)),
-                                        ),
+                                      Row(
+                                        mainAxisSize: MainAxisSize.max,
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.start,
+                                        children: [
+                                          Icon(
+                                            Icons.event_seat_outlined,
+                                            color:
+                                                FlutterFlowTheme.of(context)
+                                                    .secondaryText,
+                                            size: 16.0,
+                                          ),
+                                          Text(
+                                            'Seat',
+                                            textAlign: TextAlign.start,
+                                            style:
+                                                FlutterFlowTheme.of(context)
+                                                    .bodyMedium
+                                                    .override(
+                                                      fontFamily: 'MonaSans',
+                                                      letterSpacing: 0.0,
+                                                    ),
+                                          ),
+                                        ].divide(SizedBox(width: 10.0)),
                                       ),
-                                      Flexible(
+                                      Expanded(
                                         child: Row(
                                           mainAxisSize: MainAxisSize.max,
                                           mainAxisAlignment:
@@ -713,6 +712,17 @@ class _AttendeesDetailScreenWidgetState
                                                 ),
                                               ],
                                             ),
+                                            IconButton(onPressed: (){
+                                              Navigator.push(
+                                                context,
+                                                MaterialPageRoute(
+                                                  builder: (context) => SeatsioSeatManagerWidget(
+                                                    attendeeModel: _model, // pass the model directly
+                                                  ),
+                                                ),
+                                              );
+                                            }, icon: Icon(Icons.arrow_forward_ios,color: Colors.white,
+                                            size: 16,))
                                           ].divide(SizedBox(width: 12.0)),
                                         ),
                                       ),
