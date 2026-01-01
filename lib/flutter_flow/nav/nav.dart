@@ -3,6 +3,7 @@ import 'dart:developer';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:g_e_t_i_n_scanner/components/event_seating/transfer_summary_widget.dart';
 import 'package:g_e_t_i_n_scanner/components/setting/splash_setting_widget.dart';
 import 'package:g_e_t_i_n_scanner/pages/home_screens/event_page_tickets/event_page_tickets_widget.dart'
     show EventPageTicketsWidget;
@@ -370,6 +371,11 @@ GoRouter createRouter(AppStateNotifier appStateNotifier) => GoRouter(
           name: SplashSettingWidget.routeName,
           path: SplashSettingWidget.routePath,
           builder: (context, params) => SplashSettingWidget(),
+        ),
+        FFRoute(
+          name: TransferSummaryWidget.routeName,
+          path: TransferSummaryWidget.routePath,
+          builder: (context, params) => TransferSummaryWidget(),
         ),
         FFRoute(
           name: SeatsioSeatManagerWidget.routeName,

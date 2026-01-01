@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:g_e_t_i_n_scanner/components/event_seating/selected_info_card.dart';
+import 'package:g_e_t_i_n_scanner/components/event_seating/ticket_transfer_card.dart';
 import 'package:g_e_t_i_n_scanner/flutter_flow/flutter_flow_util.dart';
 import 'package:seatsio/seatsio.dart';
 import 'package:built_collection/built_collection.dart';
@@ -38,6 +39,27 @@ class _SeatsioSeatManagerWidgetState extends State<SeatsioSeatManagerWidget> {
   late final SeatingChartConfig _chartConfig;
   SeatsioObject? _currentSeat;
 
+
+  void _showTransferTicketSheet(SeatsioObject seat, ) {
+    final seatLabel = seat.label ?? seat.id ?? seat.uuid ?? 'unknown';
+    if (seatLabel == 'unknown') return;
+
+    final section = seat.category?.label ?? '-';
+    final row = seat.labelDetail?.parent?.toString() ?? '-';
+    final seatNumber = seat.labelDetail?.own?.toString() ?? '-';
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) {
+        return TransferTicketCard(seat: seat,attendeeModel: widget.attendeeModel,);
+      },
+    );
+  }
+
+
+
   void _showAssignedSeatSheet(SeatsioObject seat, String price) {
     final seatLabel = seat.label ?? seat.id ?? seat.uuid ?? 'unknown';
     if (seatLabel == 'unknown') return;
@@ -61,7 +83,7 @@ class _SeatsioSeatManagerWidgetState extends State<SeatsioSeatManagerWidget> {
               seat: seatNumber,
               price: price,
               onSelect: () {
-                Navigator.pop(context);
+                _showTransferTicketSheet(seat);
               },
               onDismiss: () {
                 setState(() => selectedObjectLabels.remove(seatLabel));
@@ -141,7 +163,8 @@ class _SeatsioSeatManagerWidgetState extends State<SeatsioSeatManagerWidget> {
         return Padding(
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
           child: SizedBox(
-            height:isSeatAvailable(seat)? 300:250,
+            height: 300,
+            // height:isSeatAvailable(seat)? 300:250,
             child: NotSelectedInfoCard(
               section: section,
               row: row,
@@ -160,7 +183,9 @@ class _SeatsioSeatManagerWidgetState extends State<SeatsioSeatManagerWidget> {
               onDismiss: () {
                 Navigator.pop(context);
                 _deselectSeat(seat);
-              }, status: isSeatAvailable(seat),
+              },
+              status: true,
+              // status: isSeatAvailable(seat),
             ),
           ),
         );
@@ -247,6 +272,20 @@ class _SeatsioSeatManagerWidgetState extends State<SeatsioSeatManagerWidget> {
   }
 
 
+  void printAttendeeRecord(AttendeeRow attendee) {
+    print('--- Attendee Record ---');
+    print('UID: ${attendee.uid}');
+    print('Event ID: ${attendee.eventId}');
+    print('Ticket Name: ${attendee.ticketName}');
+    print('Name: ${attendee.name}');
+    print('Email: ${attendee.email}');
+    print('Phone: ${attendee.phone}');
+    print('Seat: Row ${attendee.seatRow}, Seat ${attendee.seatSeat}, Section ${attendee.seatSection}');
+    print('Add-ons: ${attendee.addOns.map((a) => a.name).toList()}'); // if AddOnRow has `name`
+    print('Status: ${attendee.status}');
+    print('-----------------------');
+  }
+
 
   @override
   void initState() {
@@ -287,6 +326,7 @@ class _SeatsioSeatManagerWidgetState extends State<SeatsioSeatManagerWidget> {
   Widget build(BuildContext context) {
     final theme =FlutterFlowTheme.of(context);
    return  Scaffold(
+     key: scaffoldKey,
      backgroundColor: Colors.black,
      appBar: AppBar(
        backgroundColor: Colors.black,
