@@ -155,12 +155,9 @@ class _LoadingScreenWidgetState extends State<LoadingScreenWidget> {
     });
   }
 
-
-
   @override
   void dispose() {
     _model.dispose();
-
     super.dispose();
   }
 

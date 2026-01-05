@@ -134,7 +134,7 @@ class _TicketTransferWidgetState extends State<TicketTransferWidget> {
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           Text(
-                            'Ben Hopkins',
+                            '${widget.attendeeModel?.attendee?.email}',
                             style: theme.bodyMedium.copyWith(
                                 fontFamily: 'MonaSans',
                                 fontWeight: FontWeight.w500,
