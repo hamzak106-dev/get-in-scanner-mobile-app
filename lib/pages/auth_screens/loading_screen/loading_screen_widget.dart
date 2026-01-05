@@ -1,3 +1,4 @@
+import 'package:g_e_t_i_n_scanner/components/custom_button/custom_button_widget.dart';
 import 'package:g_e_t_i_n_scanner/custom_code/actions/updateDeviceAppVersion.dart';
 
 import '/flutter_flow/flutter_flow_theme.dart';
@@ -44,7 +45,7 @@ class _LoadingScreenWidgetState extends State<LoadingScreenWidget> {
           child: Material(
             color: Colors.transparent,
             child: Container(
-              width: 300, // fixed width for dialog
+              width: 370, // fixed width for dialog
               padding: const EdgeInsets.all(20.0),
               decoration: BoxDecoration(
                 color: Colors.white,
@@ -53,42 +54,73 @@ class _LoadingScreenWidgetState extends State<LoadingScreenWidget> {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Text(
-                    "Would you like to see the splash animation in future app launches?",
-                    textAlign: TextAlign.center,
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
-                  ),
+
+
+                  Text("Show Splash Animation?",
+                  style: FlutterFlowTheme.of(context).bodySmall.copyWith(
+                    color: Colors.black,
+                    fontFamily: 'MonaSans',
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    letterSpacing: 0.4,
+
+                  ),),
+
+                   Padding(
+                     padding: const EdgeInsets.only(top: 15,bottom: 25),
+                     child: Text(
+                      "Would you like to see the splash animation in future app launches?",
+                      textAlign: TextAlign.center,
+                      style: FlutterFlowTheme.of(context).bodySmall.copyWith(
+                        color: Colors.black,
+                        fontFamily: 'MonaSans',
+                        fontSize: 16
+                      ),
+                                       ),
+                   ),
                   const SizedBox(height: 20),
                   Row(
                     children: [
                       Expanded(
-                        child: TextButton(
-                          onPressed: () {
-                            FFAppState().splashScreenStatus = 'Disabled';
-                            Navigator.pop(context);
-                            _proceedAfterSplashChoice();
-                          },
-                          child: const Text("No",
-                          style: TextStyle(
-                            color: Colors.red
-                          ),),
+                        child: SizedBox(
+                          height: 60,
+                          child: OutlinedButton(
+                            style: OutlinedButton.styleFrom(
+
+                              padding: EdgeInsets.all(10),
+                              side: const BorderSide(color: Colors.black),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                            ),
+                            onPressed: (){
+                              FFAppState().splashScreenStatus = 'Disabled';
+                              Navigator.pop(context);
+                              _proceedAfterSplashChoice();
+                            },
+                            child: Text(
+                              'No',
+                              style: FlutterFlowTheme.of(context).bodySmall.override(
+                                fontFamily: 'MonaSans',
+                                color: Colors.black,
+                                letterSpacing: 0.8,
+                                fontSize: 16,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ),
                         ),
                       ),
-                      const SizedBox(width: 20),
-                      Expanded(
-                        child: TextButton(
-                          onPressed: () {
-                            FFAppState().splashScreenStatus = 'Enabled';
-                            Navigator.pop(context);
-                            _proceedAfterSplashChoice();
-                          },
-                          child:  Text("Yes",
-                          style: TextStyle(
-                            color: Colors.green.shade800,
-                            fontWeight: FontWeight.w700
-                          ),),
-                        ),
-                      ),
+
+                      const SizedBox(width: 30),
+                      Expanded(child:CustomButtonWidget(
+                        buttonColor: Colors.black,
+                          textColor: Colors.white,
+                          title: "YES", onTap: ()async{
+                        FFAppState().splashScreenStatus = 'Enabled';
+                        Navigator.pop(context);
+                        _proceedAfterSplashChoice();
+                      }) ),
                     ],
                   ),
                 ],
@@ -118,14 +150,13 @@ class _LoadingScreenWidgetState extends State<LoadingScreenWidget> {
     if (!widget.avoidWaiting && FFAppState().splashScreenStatus == 'Enabled') {
       await Future.delayed(const Duration(milliseconds: 5500));
     }
-
     // Navigate to the correct page
     if (functions.checkJson(FFAppState().user.toMap()) &&
         (FFAppState().user.userId != 0)) {
       await updateDeviceAppVersion();
       context.goNamed(DashBoardScreenWidget.routeName);
     } else {
-      context.goNamed(LoginScreenWidget.routeName);
+      context.goNamed(LoadingScreenWidget.routeName);
     }
   }
 
