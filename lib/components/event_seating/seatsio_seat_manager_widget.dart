@@ -16,7 +16,7 @@ import 'not_selected_info_card.dart';
 // c9c97b92-2315-40d4-90e0-2b58fe2d151f - stage
 // 4443593e-f4ce-4c87-b38b-af550f310f90 - prod
 const String YourWorkspaceKey = "c9c97b92-2315-40d4-90e0-2b58fe2d151f";
-const String YourEventKey = "266d2b2e-3d8b-473c-9c91-ad11f2ab16f5";
+const String YourEventKey = "124b637c-a0a8-464b-97e9-10da1d900200";
 
 class SeatsioSeatManagerWidget extends StatefulWidget {
   final AttendeesDetailScreenModel? attendeeModel;
@@ -38,7 +38,7 @@ class _SeatsioSeatManagerWidgetState extends State<SeatsioSeatManagerWidget> {
   final List<String> selectedObjectLabels = ['Try to click a seat object'];
   late final SeatingChartConfig _chartConfig;
   SeatsioObject? _currentSeat;
-
+  List<SeatsioObject> seats=[];
 
   void _showTransferTicketSheet(SeatsioObject seat, ) {
     final seatLabel = seat.label ?? seat.id ?? seat.uuid ?? 'unknown';
@@ -47,18 +47,17 @@ class _SeatsioSeatManagerWidgetState extends State<SeatsioSeatManagerWidget> {
     final section = seat.category?.label ?? '-';
     final row = seat.labelDetail?.parent?.toString() ?? '-';
     final seatNumber = seat.labelDetail?.own?.toString() ?? '-';
+    print("Total Selected Seats ${seats.length}");
 
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (context) {
-        return TransferTicketCard(seat: seat,attendeeModel: widget.attendeeModel,);
+        return TransferTicketCard(seat: seats,attendeeModel: widget.attendeeModel,);
       },
     );
   }
-
-
 
   void _showAssignedSeatSheet(SeatsioObject seat, String price) {
     final seatLabel = seat.label ?? seat.id ?? seat.uuid ?? 'unknown';
@@ -96,8 +95,15 @@ class _SeatsioSeatManagerWidgetState extends State<SeatsioSeatManagerWidget> {
     );
   }
   void _selectSeat(SeatsioObject object) {
+
     final seatLabel = object.label ?? object.id ?? object.uuid;
     if (seatLabel == null) return;
+    // Seat is free → select it if not already selected
+    setState(() {
+      _currentSeat = object;
+      selectedObjectLabels.add(seatLabel);
+      seats.add(object);
+    });
 
     // Block selection if seat is not free
     if (!isSeatAvailable(object)) {
@@ -105,20 +111,15 @@ class _SeatsioSeatManagerWidgetState extends State<SeatsioSeatManagerWidget> {
       _showNotSelectedSeatSheet(object);
 
       // Make sure chart visually deselects it
-      _seatsioController?.evaluateJavascript('chart.deselectObjects(["$seatLabel"]);');
+      // _seatsioController?.evaluateJavascript('chart.deselectObjects(["$seatLabel"]);');
       return;
     }
 
-    // Seat is free → select it if not already selected
-    if (!selectedObjectLabels.contains(seatLabel)) {
-      setState(() {
-        _currentSeat = object;
-        selectedObjectLabels.add(seatLabel);
-      });
+
 
       // Make chart reflect selection
       _seatsioController?.evaluateJavascript('chart.selectObjects(["$seatLabel"]);');
-    }
+
 
     // Show bottom sheet
     _showSelectedSeatSheet(object);
@@ -247,26 +248,30 @@ class _SeatsioSeatManagerWidgetState extends State<SeatsioSeatManagerWidget> {
     );
   }
   void _deselectSeat(SeatsioObject object) {
-    print("Selected Seats Record $object");
-    print("Deselect is called");
-
     final seatLabel = object.label ?? object.id ?? object.uuid;
     if (seatLabel == null) return;
 
-    // Remove from your Flutter state
-    if (selectedObjectLabels.contains(seatLabel)) {
-      setState(() {
-        selectedObjectLabels.remove(seatLabel);
-        _currentSeat = null;
-      });
-    }
+    print("Deselecting seat $seatLabel");
 
-    // Run JS to deselect on the Seatsio chart
-    _seatsioController?.evaluateJavascript(
-        'chart.deselectObjects(["$seatLabel"]);'
-    );
-  }
-  void _loadSeatsio() {
+    setState(() {
+      // Remove from selected labels
+      selectedObjectLabels.remove(seatLabel);
+
+      // Remove from seats list
+      seats.removeWhere((s) => s.label == seatLabel || s.id == seatLabel || s.uuid == seatLabel);
+
+      // Clear current seat if it matches
+      if (_currentSeat != null &&
+          (_currentSeat!.label == seatLabel ||
+              _currentSeat!.id == seatLabel ||
+              _currentSeat!.uuid == seatLabel)) {
+        _currentSeat = null;
+      }
+    });
+
+    // Deselect on Seatsio chart
+    _seatsioController?.evaluateJavascript('chart.deselectObjects(["$seatLabel"]);');
+  }  void _loadSeatsio() {
     final newChartConfig = _chartConfig.rebuild((b) => b..showLegend = false);
     _seatsioController?.reload(newChartConfig);
   }
@@ -285,6 +290,17 @@ class _SeatsioSeatManagerWidgetState extends State<SeatsioSeatManagerWidget> {
     print('Status: ${attendee.status}');
     print('-----------------------');
   }
+  void _fetchChartCategories() {
+    _seatsioController?.evaluateJavascript('''
+    chart.listCategories(function(categories) {
+      // Send each category back to Flutter
+      categories.forEach(function(c) {
+        FlutterJsBridge.postMessage(JSON.stringify(c));
+      });
+    });
+  ''');
+  }
+
 
 
   @override
@@ -309,8 +325,9 @@ class _SeatsioSeatManagerWidgetState extends State<SeatsioSeatManagerWidget> {
       ..pricing = ListBuilder<PricingForCategory>([
         PricingForCategory(
               (b) => b
-            ..category = "expensive"
-            ..price = 100,
+            ..category = "D"
+
+                ..price = 100,
         ),
       ])
       ..enableHoldSucceededCallback = true
@@ -325,103 +342,109 @@ class _SeatsioSeatManagerWidgetState extends State<SeatsioSeatManagerWidget> {
   @override
   Widget build(BuildContext context) {
     final theme =FlutterFlowTheme.of(context);
-   return  Scaffold(
-     key: scaffoldKey,
-     backgroundColor: Colors.black,
-     appBar: AppBar(
-       backgroundColor: Colors.black,
-       leading: IconButton(onPressed: (){
-         Navigator.pop(context);
-       }, icon: Icon(Icons.arrow_back_ios,color: Colors.white,)),
-       title: Text(   valueOrDefault<String>(
-        widget.attendeeModel?.attendee?.name,
-         '-',
-       ),
-      style: FlutterFlowTheme.of(context).bodySmall.override(
-         fontFamily: 'Mona Sans',
-         color: Colors.white,
-         letterSpacing: 0.56,
-         fontSize: 14,
-         fontWeight: FontWeight.w400,
-       ),),
-     ),
-     body: Stack(
-       children: [
+    return  Scaffold(
+      key: scaffoldKey,
+      backgroundColor: Colors.black,
+      appBar: AppBar(
+        backgroundColor: Colors.black,
+        leading: IconButton(onPressed: (){
+          Navigator.pop(context);
+        }, icon: Icon(Icons.arrow_back_ios,color: Colors.white,)),
+        title: Text(   valueOrDefault<String>(
+          widget.attendeeModel?.attendee?.name,
+          '-',
+        ),
+          style: FlutterFlowTheme.of(context).bodySmall.override(
+            fontFamily: 'Mona Sans',
+            color: Colors.white,
+            letterSpacing: 0.56,
+            fontSize: 14,
+            fontWeight: FontWeight.w400,
+          ),),
+      ),
+      body: Stack(
+        children: [
 
-         Positioned.fill(
-           child: SeatsioWebView(
-             onWebViewCreated: (controller) {
-               _seatsioController = controller;
-               _loadSeatsio();
-             },
-             onChartRendered: (_) => print("Chart rendered"),
-             onChartRenderingFailed: () => print("Chart rendering failed"),
-             onObjectSelected: (object, type) {
-               print("Selected Seats Record $object");
-               _selectSeat(object);
-             },
-             onObjectDeselected: (object, type) {
-               final seatLabel = object.label ?? object.id ?? object.uuid;
-               if (seatLabel == null) return;
+          Positioned.fill(
+            child: SeatsioWebView(
+              onWebViewCreated: (controller) {
+                _seatsioController = controller;
+                _loadSeatsio();
+              },
+              onChartRendered: (_){
+                print("Chart rendered");
+                print("Getting Category");
+                _fetchChartCategories();
+              },
 
-               if (selectedObjectLabels.contains(seatLabel)) {
-                 _deselectSeat(object);
-               }
-             },
+              onChartRenderingFailed: () => print("Chart rendering failed"),
+              onObjectSelected: (object, type) {
+                print("Selected Seats Record $object");
+                _selectSeat(object);
+              },
+              onObjectDeselected: (object, type) {
+                final seatLabel = object.label ?? object.id ?? object.uuid;
+                if (seatLabel == null) return;
 
-           ),
-         ),
-         Positioned(
-             top: 45,
-             left: 20,
-             right: 20,
-             child: Row(children: [
-               Container(
-                 height:40,
-                 width: 40,
-                 decoration: BoxDecoration(
-                     shape: BoxShape.circle,
-                     color: theme.secondary600
-                 ),
-                 child: Icon(
-                   FFIcons.kicSearchNormal,
-                   color: Color(0xFF6B6D75),
-                   size: 16.0,
-                 ),
-               ),
-               Spacer(),
-               Align(
-                 alignment: AlignmentDirectional(0.0, 1.0),
-                 child: custom_widgets.FilterPopUp(
-                   width: 40.0,
-                   height: 40.0,
-                   onChange: (value) async {
-                     logFirebaseEvent('MANAGER_DASHBOARD_FilterPopUp_ON_CHANGE');
-                     safeSetState(() {});
-                   },
-                 ),
-               ),
-               Padding(
-                 padding: const EdgeInsets.only(left: 16),
-                 child: Container(
-                   height:40,
-                   width: 40,
-                   decoration: BoxDecoration(
-                       shape: BoxShape.circle,
-                       color: Colors.white
-                   ),
-                   child: Padding(
-                     padding: const EdgeInsets.all(10),
-                     child: SvgPicture.asset("assets/svg/filter-edit.svg",height: 16,width: 16,),
-                   ),
-                 ),
-               ),
-             ],
-             )),
+                if (selectedObjectLabels.contains(seatLabel)) {
+                  _deselectSeat(object);
+                }
+              },
 
-       ],
-     ),
-   );
+            ),
+          ),
+          Positioned(
+              top: 45,
+              left: 20,
+              right: 20,
+              child: Row(children: [
+                Container(
+                  height:40,
+                  width: 40,
+                  decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: theme.secondary600
+                  ),
+                  child: Icon(
+                    FFIcons.kicSearchNormal,
+                    color: Color(0xFF6B6D75),
+                    size: 16.0,
+                  ),
+                ),
+                Spacer(),
+                Align(
+                  alignment: AlignmentDirectional(0.0, 1.0),
+                  child: custom_widgets.FilterPopUp(
+                    width: 40.0,
+                    height: 40.0,
+                    onChange: (value) async {
+                      logFirebaseEvent('MANAGER_DASHBOARD_FilterPopUp_ON_CHANGE');
+                      safeSetState(() {});
+                    },
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.only(left: 16),
+                  child: Container(
+                    height:40,
+                    width: 40,
+                    decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: Colors.white
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.all(10),
+                      child: SvgPicture.asset("assets/svg/filter-edit.svg",height: 16,width: 16,),
+                    ),
+                  ),
+                ),
+              ],
+              )),
+
+        ],
+      ),
+    );
 
   }
 }
+

@@ -1,13 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
+import 'package:seatsio/seatsio.dart';
 
 import '../../flutter_flow/flutter_flow_theme.dart';
 import '../../pages/home_screens/attendees_detail_screen/attendees_detail_screen_model.dart';
 import '../custom_button/custom_button_widget.dart';
 class TicketTransferWidget extends StatefulWidget {
   final  AttendeesDetailScreenModel? attendeeModel;
-
-  const TicketTransferWidget({super.key, this.attendeeModel});
+ final List<SeatsioObject>? seats;
+  const TicketTransferWidget({super.key, this.attendeeModel, this.seats});
 
   @override
   State<TicketTransferWidget> createState() => _TicketTransferWidgetState();
@@ -76,7 +77,7 @@ class _TicketTransferWidgetState extends State<TicketTransferWidget> {
                               Padding(
                                 padding: const EdgeInsets.only(top: 10),
                                 child: Text(
-                                  'X1 TICKETS',
+                                  'X${(widget.seats!=null&&widget.seats!.isNotEmpty)?widget.seats!.length:"0"} TICKETS',
                                   style: theme.titleMedium.copyWith(
                                       fontFamily: 'MonaSans',
                                       fontWeight: FontWeight.w500,

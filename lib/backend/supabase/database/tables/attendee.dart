@@ -90,7 +90,7 @@ class AttendeeRow extends SupabaseDataRow {
 
   set profileImg(String? value) => setField<String>('profile_img', value);
 
-  bool get statusUpdate => getField<bool>('status_update')!;
+  bool get statusUpdate => getField<bool>('status_update')??false;
 
   set statusUpdate(bool value) => setField<bool>('status_update', value);
 

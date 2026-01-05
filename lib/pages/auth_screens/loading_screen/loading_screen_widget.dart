@@ -125,7 +125,7 @@ class _LoadingScreenWidgetState extends State<LoadingScreenWidget> {
       await updateDeviceAppVersion();
       context.goNamed(DashBoardScreenWidget.routeName);
     } else {
-      context.goNamed(LoginScreenWidget.routeName);
+      context.goNamed(LoadingScreenWidget.routeName);
     }
   }
 

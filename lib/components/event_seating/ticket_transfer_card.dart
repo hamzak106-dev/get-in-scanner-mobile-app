@@ -1,24 +1,19 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/flutter_svg.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:g_e_t_i_n_scanner/components/event_seating/transfer_summary_widget.dart';
 import 'package:g_e_t_i_n_scanner/components/simple_text_field/simple_text_field_widget_2.dart';
-
-import 'package:g_e_t_i_n_scanner/flutter_flow/flutter_flow_icon_button.dart';
 import 'package:g_e_t_i_n_scanner/flutter_flow/flutter_flow_theme.dart';
 import 'package:g_e_t_i_n_scanner/flutter_flow/custom_functions.dart' as functions;
 import 'package:seatsio/seatsio.dart';
-import '../../custom_code/widgets/mobile_number_text_field_widget_2.dart';
 import '../../custom_code/widgets/mobile_number_text_field_widget_2.dart' as custom_widgets;
 import '../../pages/home_screens/attendees_detail_screen/attendees_detail_screen_model.dart';
-import '../simple_text_field/simple_text_field_widget.dart';
 import '/components/custom_button/custom_button_widget.dart';
 import '/custom_code/widgets/index.dart' as custom_widgets;
 import '/flutter_flow/flutter_flow_util.dart';
 import '/flutter_flow/custom_functions.dart' as functions;
-import 'package:provider/provider.dart';
 
 class TransferTicketCard extends StatefulWidget {
- final  SeatsioObject seat;
+ final  List<SeatsioObject> seat;
  final  AttendeesDetailScreenModel? attendeeModel;
 
  const TransferTicketCard({super.key, required this.seat, this.attendeeModel});
@@ -31,7 +26,6 @@ class _TransferTicketCardState extends State<TransferTicketCard> {
   late String _phoneNumber;
   late String _email;
   late String _countryCode;
-  late String _errorText;
 
   final scaffoldKey = GlobalKey<ScaffoldState>();
 
@@ -40,8 +34,7 @@ class _TransferTicketCardState extends State<TransferTicketCard> {
     super.initState();
     _phoneNumber = '';
     _email = '';
-    _countryCode = '+1'; // Default country code
-    _errorText = '';
+    _countryCode = '+1';
   }
 
   @override
@@ -122,8 +115,10 @@ class _TransferTicketCardState extends State<TransferTicketCard> {
                   fillColor: FlutterFlowTheme.of(context).overlayLight,
                   phoneNumber: _phoneNumber,
                   onChange: (countryCode, phoneNumber, dialCode) async {
+
+
                     setState(() {
-                      _countryCode = countryCode;
+                      _countryCode = dialCode??"1";
                       _phoneNumber = phoneNumber??"";
                     });
                   },
@@ -132,6 +127,11 @@ class _TransferTicketCardState extends State<TransferTicketCard> {
                 // Email Text Field
                 SimpleTextFieldWidget2(
                   hintText: 'mail@mail.com',
+                  onChanged: (value){
+                    safeSetState(() {
+                      _email=value;
+                    });
+                  },
 
                 ),
                 // Error text display
@@ -141,32 +141,56 @@ class _TransferTicketCardState extends State<TransferTicketCard> {
                   title: 'TRANSFER',
                   buttonColor: Colors.black,
                   textColor: Colors.white,
-                  onTap: () async{
-                    if (_phoneNumber.isEmpty && _email.isEmpty) {
-                      setState(() {
-                        _errorText = 'Please provide either a phone number or an email.';
-                      });
+                  onTap: () async {
+                    if (_phoneNumber.isEmpty ) {
+                      Fluttertoast.showToast(
+                        msg: "Please enter phone number",
+                        toastLength: Toast.LENGTH_LONG,
+                        gravity: ToastGravity.BOTTOM,
+                        backgroundColor: Colors.red,
+                        textColor: Colors.white,
+                        fontSize: 14.0,
+                      );
+
+                      return;
+                    }
+                    else if( _email.isEmpty){
+                      Fluttertoast.showToast(
+                        msg: "Please enter an email.",
+                        toastLength: Toast.LENGTH_LONG,
+                        gravity: ToastGravity.BOTTOM,
+                        backgroundColor: Colors.red,
+                        textColor: Colors.white,
+                        fontSize: 14.0,
+                      );
+
+                      return;
                     }
 
-                    setState(() {
-                      _errorText = '';
-                    });
 
-                    // Simulate transfer logic (this is where you would call your backend)
-                    context.pushNamed(
-                      TransferSummaryWidget.routeName,
-                      queryParameters: {
-                        'seat': serializeParam(
-                          widget.seat,
-                          ParamType.JSON,
+
+                    final model = widget.attendeeModel;
+
+                    if (model != null && model.attendee != null) {
+                      if (_phoneNumber.isNotEmpty) {
+                        model.attendee!.phone = '$_countryCode$_phoneNumber';
+                      }
+
+                      if (_email.isNotEmpty) {
+                        model.attendee!.email = _email;
+                      }
+                    }
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => TransferSummaryWidget(
+                          seat: widget.seat,
+                          attendeeModel: widget.attendeeModel,
                         ),
-                        'attendeeModel': serializeParam(
-                          widget.attendeeModel,
-                          ParamType.JSON,
-                        ),
-                      },
+                      ),
                     );
                   },
+
                 ),
                 // Cancel Button
                 Padding(

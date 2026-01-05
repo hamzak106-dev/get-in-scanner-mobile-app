@@ -3,11 +3,11 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:g_e_t_i_n_scanner/components/custom_button/custom_button_widget.dart';
 import 'package:g_e_t_i_n_scanner/components/event_seating/ticket_transfer_widget.dart';
 import 'package:seatsio/seatsio.dart';
-
+import '../../backend/supabase/database/database.dart';
 import '../../flutter_flow/flutter_flow_theme.dart';
 import '../../pages/home_screens/attendees_detail_screen/attendees_detail_screen_model.dart';
 class TransferSummaryWidget extends StatefulWidget {
-  final  SeatsioObject? seat;
+  final  List<SeatsioObject>? seat;
   final  AttendeesDetailScreenModel? attendeeModel;
   const TransferSummaryWidget({super.key,  this.seat, this.attendeeModel});
 
@@ -20,6 +20,72 @@ class TransferSummaryWidget extends StatefulWidget {
 class _TransferSummaryWidgetState extends State<TransferSummaryWidget> {
 
   final scaffoldKey = GlobalKey<ScaffoldState>();
+  Future<void> saveSelectedSeats(
+      List<SeatsioObject> seats,
+      AttendeesDetailScreenModel attendeeModel,
+      ) async {
+    final supabase = Supabase.instance.client;
+
+    if (seats.isEmpty) return;
+
+    final attendee = attendeeModel.attendee;
+
+    if (attendee == null) {
+      print("No attendee data available!");
+      return;
+    }
+
+    // Prepare a list of records to insert
+    final records = seats.map((seat) {
+      return {
+        'event_id': attendee.eventId,
+        'purchase_id': attendee.purchaseId,
+        'ticket_id': attendee.ticketId,
+        'ticket_name': attendee.ticketName ?? 'GA Ticket',
+        'ticket_type': attendee.ticketType ?? 1,
+        'ticket_status': attendee.ticketStatus ?? 1,
+        'transaction_number': attendee.transactionNumber ?? 0,
+        'name': attendee.name ?? '',
+        'email': attendee.email ?? '',
+        'phone': attendee.phone ?? '',
+        'seat_row': seat.labelDetail?.parent?.toString() ?? '',
+        'seat_seat': seat.labelDetail?.own?.toString() ?? '',
+        'seat_section': seat.category?.label ?? '',
+        'ticket_hash': '${attendee.ticketId}-${seat.id}-${attendee.eventId}', // unique hash
+        'profile_img': attendee.profileImg ?? '',
+        'user_id': attendee.userId,
+        'salesman_id': attendee.salesmanId ?? 0,
+        'seller_name': attendee.sellerName ?? '',
+        'manager_ids': attendee.managerIds ?? <int>[],
+        'is_csv_record': attendee.isCsvRecord ?? false,
+        'status_update': attendee.statusUpdate ?? true,
+        'updated_at': DateTime.now().toIso8601String(), // optional
+      };
+    }).toList();
+
+    try {
+      // Insert multiple records
+      final response = await supabase.from('attendee').insert(records);
+
+      print("Seats saved successfully: $response");
+
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => TicketTransferWidget(attendeeModel: attendeeModel,
+          seats: widget.seat,),
+        ),
+      );
+    } catch (e) {
+      print("Error saving seats: $e");
+    }
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    print("Attendee Response Model ${widget.attendeeModel?.attendee}");
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -65,7 +131,6 @@ class _TransferSummaryWidgetState extends State<TransferSummaryWidget> {
             ),
           ),
         ),
-
         centerTitle: true,
         title: Text(
           'TRANSFER SUMMERY',
@@ -101,7 +166,7 @@ class _TransferSummaryWidgetState extends State<TransferSummaryWidget> {
                         child: Column(
                           children: [
                             Text(
-                              'X1 TICKETS',
+                              'X${(widget.seat!=null&&widget.seat!.isNotEmpty)?widget.seat!.length:"0"} TICKETS',
                               style: theme.titleMedium.copyWith(
                                 fontFamily: 'MonaSans',
                                 fontWeight: FontWeight.w500,
@@ -145,7 +210,7 @@ class _TransferSummaryWidgetState extends State<TransferSummaryWidget> {
                             text: 'You are about to transfer the ticket to ',
                           ),
                           TextSpan(
-                            text: '+1234 76999',
+                            text: '${widget.attendeeModel?.attendee?.phone}',
                             style: const TextStyle(
                               fontWeight: FontWeight.w700,
                               letterSpacing: 0.14
@@ -259,9 +324,9 @@ class _TransferSummaryWidgetState extends State<TransferSummaryWidget> {
                        buttonColor: Colors.black,
                         textColor: Colors.white,
                         title: "CONFIRM & SEND TICKET", onTap: ()async{
-                         Navigator.push(context, MaterialPageRoute(builder: (context)=>TicketTransferWidget(
-                           attendeeModel: widget.attendeeModel,
-                         )));
+
+                      saveSelectedSeats(widget.seat??[],widget.attendeeModel!);
+
                     }),
                     SizedBox(height: 15,)
                   ],
@@ -302,9 +367,6 @@ class _TransferSummaryWidgetState extends State<TransferSummaryWidget> {
           ),
         ),
       ),
-
-
-
     );
   }
 }

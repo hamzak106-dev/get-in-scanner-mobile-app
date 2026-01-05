@@ -8,11 +8,12 @@ class SimpleTextFieldWidget2 extends StatefulWidget {
   const SimpleTextFieldWidget2({
     super.key,
     this.hintText,
-    this.initialValue,
+    this.initialValue, this.onChanged,
   });
 
   final String? hintText;
   final String? initialValue;
+  final void Function(String)? onChanged;
 
   @override
   State<SimpleTextFieldWidget2> createState() => _SimpleTextFieldWidget2State();
@@ -50,6 +51,7 @@ class _SimpleTextFieldWidget2State extends State<SimpleTextFieldWidget2> {
       focusNode: _model.textFieldFocusNode,
       autofocus: false,
       obscureText: false,
+      onChanged:widget.onChanged ,
       decoration: InputDecoration(
         isDense: true,
         labelStyle: FlutterFlowTheme.of(context).labelMedium.override(
