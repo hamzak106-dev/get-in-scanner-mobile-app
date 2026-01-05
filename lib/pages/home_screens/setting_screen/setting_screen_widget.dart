@@ -840,7 +840,7 @@ class _SettingScreenWidgetState extends State<SettingScreenWidget>
                                   padding: EdgeInsetsDirectional.fromSTEB(
                                       12.0, 0.0, 0.0, 12.0),
                                   child: Text(
-                                    'On Site Pin',
+                                    'Team',
                                     style: FlutterFlowTheme.of(context)
                                         .titleSmall
                                         .override(
