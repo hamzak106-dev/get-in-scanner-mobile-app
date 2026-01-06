@@ -83,7 +83,7 @@ class _LoadingScreenWidgetState extends State<LoadingScreenWidget> {
                     children: [
                       Expanded(
                         child: SizedBox(
-                          height: 60,
+                          height: 45,
                           child: OutlinedButton(
                             style: OutlinedButton.styleFrom(
 
@@ -113,14 +113,36 @@ class _LoadingScreenWidgetState extends State<LoadingScreenWidget> {
                       ),
 
                       const SizedBox(width: 30),
-                      Expanded(child:CustomButtonWidget(
-                        buttonColor: Colors.black,
-                          textColor: Colors.white,
-                          title: "YES", onTap: ()async{
-                        FFAppState().splashScreenStatus = 'Enabled';
-                        Navigator.pop(context);
-                        _proceedAfterSplashChoice();
-                      }) ),
+                      Expanded(child:
+                      SizedBox(
+                        height: 45,
+                        child: ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.black,
+                            padding: const EdgeInsets.all(10),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            elevation: 0, // optional: flat look
+                          ),
+                          onPressed: () {
+                            Navigator.pop(context);
+                            _proceedAfterSplashChoice();
+                          },
+                          child: Text(
+                            'Yes',
+                            style: FlutterFlowTheme.of(context).bodySmall.override(
+                              fontFamily: 'MonaSans',
+                              color: Colors.white,
+                              letterSpacing: 0.8,
+                              fontSize: 16,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        )
+
+                      ),
+                      ),
                     ],
                   ),
                 ],
