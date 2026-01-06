@@ -163,7 +163,7 @@ class _LoadingScreenWidgetState extends State<LoadingScreenWidget> {
       await updateDeviceAppVersion();
       context.goNamed(DashBoardScreenWidget.routeName);
     } else {
-      context.goNamed(LoginScreenWidget.routeName);
+      context.goNamed(LoadingScreenWidget.routeName);
     }
   }
 
@@ -249,6 +249,13 @@ class _LoadingScreenWidgetState extends State<LoadingScreenWidget> {
                   mainAxisSize: MainAxisSize.min,
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
+                    if (FFAppState().splashScreenStatus == 'Disabled')
+                      Padding(
+                      padding: const EdgeInsets.only(bottom: 30),
+                      child: Image.asset("assets/images/loading_logo.png",
+                      height: 65,
+                      width: 180,),
+                    ),
                     InkWell(
                       splashColor: Colors.transparent,
                       focusColor: Colors.transparent,
