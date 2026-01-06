@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/svg.dart';
 import '../../flutter_flow/flutter_flow_theme.dart';
 
 class SelectedInfoCard extends StatelessWidget {
@@ -27,16 +28,32 @@ class SelectedInfoCard extends StatelessWidget {
           children: [
 
             Padding(
-              padding: const EdgeInsets.only(top: 12,bottom: 24),
-              child: Container(
-                width: 110,
-                height: 5,
-                decoration: BoxDecoration(
-                  color:theme.tertiary800,
-                  borderRadius: BorderRadius.circular(50),
-                ),
+              padding: const EdgeInsets.only(left: 16,right: 16,bottom: 2,top: 16),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text("Seats Selection",
+                    style: FlutterFlowTheme.of(context).bodySmall.copyWith(
+                      fontSize: 14,
+                      fontFamily: 'MonaSans',
+                      color: Colors.black,
+                      fontWeight: FontWeight.w400,
+                      letterSpacing: 0.14,
+
+                    ),),
+                  GestureDetector(
+                    onTap: (){
+                      Navigator.pop(context);
+                    },
+                    child: SvgPicture.asset("assets/svg/close-circle.svg",
+                      height: 24,
+                      width: 24,),
+                  )
+
+                ],
               ),
             ),
+
 
             // Top Info Row
             Padding(

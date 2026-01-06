@@ -128,6 +128,7 @@ class LoginVFiveCall {
   }
 }
 
+
 /// End GetInAuth Group Code
 
 /// Start GetIn Scanner APIs Group Code
@@ -151,9 +152,59 @@ class GetInScannerAPIsGroup {
 static GetQuickPayTerminalTokenCall getQuickPayTerminalTokenCall =
 GetQuickPayTerminalTokenCall();
 
+static TransferTicketCall transferTicketCall= TransferTicketCall();
+
   static final interceptors = [
     ExampleInterceptor(),
   ];
+}
+
+class TransferTicketCall {
+  Future<ApiCallResponse> call({
+    String? getinToken = '',
+    int? purchaseUserId,
+    String? puiHash = '',
+    String? email = '',
+    String? phone = '',
+    String? phoneCountryCode = '',
+    String? apiBaseURL,
+  }) async {
+    final baseUrl = GetInScannerAPIsGroup.getBaseUrl(
+      apiBaseURL: apiBaseURL,
+    );
+
+    final ffApiRequestBody = '''
+{
+  "main_purchase_identifier": "${puiHash}",
+  "email": "${email}",
+  "phone": "${phone}",
+  "phone_country_code": "${phoneCountryCode}"
+}''';
+    return FFApiInterceptor.makeApiCall(
+      // ignore: prefer_const_constructors - can be mutated by interceptors
+      ApiCallOptions(
+        callName: 'transfer ticket',
+        apiUrl: '${baseUrl}/api/user-tickets/transfer/${purchaseUserId}',
+        callType: ApiCallType.POST,
+        // ignore: prefer_const_literals_to_create_immutables - can be mutated by interceptors
+        headers: {
+          'AUTHORIZATION': 'Bearer ${getinToken}',
+        },
+        // ignore: prefer_const_literals_to_create_immutables - can be mutated by interceptors
+        params: {},
+        body: ffApiRequestBody,
+        bodyType: BodyType.JSON,
+        returnBody: true,
+        encodeBodyUtf8: false,
+        decodeUtf8: false,
+        cache: false,
+        isStreamingApi: false,
+        alwaysAllowBody: false,
+      ),
+
+      GetInScannerAPIsGroup.interceptors,
+    );
+  }
 }
 
 class SyncWithGetINCall {
@@ -423,6 +474,8 @@ class GetQuickPayTerminalTokenCall {
     );
   }
 }
+
+
 
 
 /// End GetIn Scanner APIs Group Code

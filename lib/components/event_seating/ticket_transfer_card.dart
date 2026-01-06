@@ -186,6 +186,7 @@ class _TransferTicketCardState extends State<TransferTicketCard> {
                         builder: (_) => TransferSummaryWidget(
                           seat: widget.seat,
                           attendeeModel: widget.attendeeModel,
+                          countryCode: _countryCode,
                         ),
                       ),
                     );

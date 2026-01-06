@@ -2,14 +2,19 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:g_e_t_i_n_scanner/components/custom_button/custom_button_widget.dart';
 import 'package:g_e_t_i_n_scanner/components/event_seating/ticket_transfer_widget.dart';
+import 'package:g_e_t_i_n_scanner/flutter_flow/flutter_flow_util.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:seatsio/seatsio.dart';
+import '../../backend/api_requests/api_calls.dart';
 import '../../backend/supabase/database/database.dart';
+import '../../config/flavor_helper.dart';
 import '../../flutter_flow/flutter_flow_theme.dart';
 import '../../pages/home_screens/attendees_detail_screen/attendees_detail_screen_model.dart';
 class TransferSummaryWidget extends StatefulWidget {
   final  List<SeatsioObject>? seat;
   final  AttendeesDetailScreenModel? attendeeModel;
-  const TransferSummaryWidget({super.key,  this.seat, this.attendeeModel});
+  final String? countryCode;
+  const TransferSummaryWidget({super.key,  this.seat, this.attendeeModel, this.countryCode});
 
   static String routeName = 'TransferSummaryWidget';
   static String routePath = '/TransferSummaryWidget';
@@ -323,11 +328,92 @@ class _TransferSummaryWidgetState extends State<TransferSummaryWidget> {
                     CustomButtonWidget(
                        buttonColor: Colors.black,
                         textColor: Colors.white,
-                        title: "CONFIRM & SEND TICKET", onTap: ()async{
+                        title: "CONFIRM & SEND TICKET",
+                      onTap: () async {
+                        logFirebaseEvent(
+                            'TRANSFER_SUMMARY_V2_APPROVE_TRANSFER_BTN');
+                        logFirebaseEvent(
+                            'Button_backend_call');
+                        var model =
+                        await GetInScannerAPIsGroup
+                            .transferTicketCall
+                            .call(
+                          getinToken:
+                          FFAppState().user.auth.session,
+                          purchaseUserId:
+                          widget.attendeeModel?.attendee?.purchaseId,
+                          puiHash: widget.attendeeModel?.attendee?.ticketHash,
+                          phone: widget.attendeeModel?.attendee?.phone,
+                          email: widget.attendeeModel?.attendee?.email,
+                          phoneCountryCode: widget
+                              .countryCode,  apiBaseURL:"https://api.getin-nextgen.com"
+                         // FlavorHelper.appFlavor.apiBaseUrl,
+                        );
+                        print("API Response: ${model.statusCode}");
+                        print("API Response: ${model.exceptionMessage}");
+                        // if ((_model.transferRes?.succeeded ??
+                        //     true)) {
+                        //   logFirebaseEvent(
+                        //       'Button_update_app_state');
+                        //
+                        //   safeSetState(() {});
+                        //   logFirebaseEvent(
+                        //       'Button_navigate_to');
+                        //   if (Navigator.of(context)
+                        //       .canPop()) {
+                        //     context.pop();
+                        //   }
+                        //   // context.pushNamed(
+                        //   //   TransferConfirmationV2Widget
+                        //   //       .routeName,
+                        //   //   queryParameters: {
+                        //   //     'eventImage': serializeParam(
+                        //   //       widget.eventImage,
+                        //   //       ParamType.String,
+                        //   //     ),
+                        //   //     'ticket': serializeParam(
+                        //   //       widget.ticket,
+                        //   //       ParamType.DataStruct,
+                        //   //     ),
+                        //   //     'receiver': serializeParam(
+                        //   //       widget.receiver,
+                        //   //       ParamType.DataStruct,
+                        //   //     ),
+                        //   //     'receiverPhone': serializeParam(
+                        //   //       widget.selectedPhone,
+                        //   //       ParamType.String,
+                        //   //     ),
+                        //   //   }.withoutNulls,
+                        //   // );
+                        // } else {
+                        //   logFirebaseEvent(
+                        //       'Button_show_snack_bar');
+                        //   ScaffoldMessenger.of(context)
+                        //       .showSnackBar(
+                        //     SnackBar(
+                        //       content: Text(
+                        //         'Oops, something went wrong  🙈 Plz again try again',
+                        //         style: GoogleFonts.inter(
+                        //           color: FlutterFlowTheme.of(
+                        //               context)
+                        //               .primaryText,
+                        //         ),
+                        //       ),
+                        //       duration: Duration(
+                        //           milliseconds: 4000),
+                        //       backgroundColor:
+                        //       FlutterFlowTheme.of(context)
+                        //           .secondary,
+                        //     ),
+                        //   );
+                        // }
 
-                      saveSelectedSeats(widget.seat??[],widget.attendeeModel!);
-
-                    }),
+                        safeSetState(() {});
+                      },
+                    //     onTap: ()async{
+                    //   // saveSelectedSeats(widget.seat??[],widget.attendeeModel!);
+                    // }
+                    ),
                     SizedBox(height: 15,)
                   ],
                 ),
@@ -350,19 +436,13 @@ class _TransferSummaryWidgetState extends State<TransferSummaryWidget> {
                       fontFamily: 'MonaSans',
                       fontSize: 14,
                       fontWeight: FontWeight.w400
-                  
-                  
-                  
-                  
                     ),),
                     SvgPicture.asset("assets/svg/message-question.svg",height: 18.823528289794922,
                     width: 18.823528289794922,
                     color: Colors.white,)
-                  
                   ],
                 ),
               )
-              
             ],
           ),
         ),
