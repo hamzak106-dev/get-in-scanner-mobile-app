@@ -33,126 +33,6 @@ class _LoadingScreenWidgetState extends State<LoadingScreenWidget> {
   late LoadingScreenModel _model;
 
   final scaffoldKey = GlobalKey<ScaffoldState>();
-  void _showSplashChoiceDialog() {
-    // Mark as seen immediately
-    FFAppState().hasSeenSplashPrompt = true;
-
-    showDialog(
-      context: context,
-      barrierDismissible: false, // user must choose
-      builder: (context) {
-        return Center(
-          child: Material(
-            color: Colors.transparent,
-            child: Container(
-              width: 370, // fixed width for dialog
-              padding: const EdgeInsets.all(20.0),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(12.0),
-              ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-
-
-                  Text("Show Splash Animation?",
-                  style: FlutterFlowTheme.of(context).bodySmall.copyWith(
-                    color: Colors.black,
-                    fontFamily: 'MonaSans',
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                    letterSpacing: 0.4,
-
-                  ),),
-
-                   Padding(
-                     padding: const EdgeInsets.only(top: 15,bottom: 25),
-                     child: Text(
-                      "Would you like to see the splash animation in future app launches?",
-                      textAlign: TextAlign.center,
-                      style: FlutterFlowTheme.of(context).bodySmall.copyWith(
-                        color: Colors.black,
-                        fontFamily: 'MonaSans',
-                        fontSize: 16
-                      ),
-                                       ),
-                   ),
-                  const SizedBox(height: 20),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: SizedBox(
-                          height: 45,
-                          child: OutlinedButton(
-                            style: OutlinedButton.styleFrom(
-
-                              padding: EdgeInsets.all(10),
-                              side: const BorderSide(color: Colors.black),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                            ),
-                            onPressed: (){
-                              FFAppState().splashScreenStatus = 'Disabled';
-                              Navigator.pop(context);
-                              _proceedAfterSplashChoice();
-                            },
-                            child: Text(
-                              'No',
-                              style: FlutterFlowTheme.of(context).bodySmall.override(
-                                fontFamily: 'MonaSans',
-                                color: Colors.black,
-                                letterSpacing: 0.8,
-                                fontSize: 16,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-
-                      const SizedBox(width: 30),
-                      Expanded(child:
-                      SizedBox(
-                        height: 45,
-                        child: ElevatedButton(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.black,
-                            padding: const EdgeInsets.all(10),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                            elevation: 0, // optional: flat look
-                          ),
-                          onPressed: () {
-                            Navigator.pop(context);
-                            _proceedAfterSplashChoice();
-                          },
-                          child: Text(
-                            'Yes',
-                            style: FlutterFlowTheme.of(context).bodySmall.override(
-                              fontFamily: 'MonaSans',
-                              color: Colors.white,
-                              letterSpacing: 0.8,
-                              fontSize: 16,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                        )
-
-                      ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-          ),
-        );
-      },
-    );
-  }
 
   void _proceedAfterSplashChoice() async {
     // Show logo briefly if you want
@@ -190,11 +70,9 @@ class _LoadingScreenWidgetState extends State<LoadingScreenWidget> {
     _model = createModel(context, () => LoadingScreenModel());
 
     logFirebaseEvent('screen_view', parameters: {'screen_name': 'LoadingScreen'});
-    // On page load action.
     SchedulerBinding.instance.addPostFrameCallback((_) async {
-      if (!FFAppState().hasSeenSplashPrompt) {
-        FFAppState().hasSeenSplashPrompt = true;
-        _showSplashChoiceDialog();
+      if (!FFAppState().isFirstLaunchDone) {
+        FFAppState().isFirstLaunchDone = true;
       }
       await _handleSplashAndNavigation();
       await actions.getDeviceId();
@@ -217,6 +95,7 @@ class _LoadingScreenWidgetState extends State<LoadingScreenWidget> {
     super.dispose();
   }
 
+  bool _riveCompleted=false;
 
 
   @override
@@ -238,9 +117,26 @@ class _LoadingScreenWidgetState extends State<LoadingScreenWidget> {
               artboard: 'Loading Animation',
               fit: BoxFit.fill,
               controllers: _model.riveAnimationControllers,
+              onInit: (artboard) {
+                final riveController = SimpleAnimation('Animation 1', autoplay: true);
+
+                // Listen for when the animation finishes
+                riveController.isActiveChanged.addListener(() {
+                  if (!riveController.isActive) {
+                    // Animation finished
+                    setState(() {
+                      _riveCompleted = true;
+                    });
+                  }
+                });
+
+                artboard.addController(riveController);
+
+              },
             ),
           ),
           if (_model.showButtons)
+
             Align(
               alignment: AlignmentDirectional(0.0, 0.0),
               child: Padding(
@@ -326,6 +222,40 @@ class _LoadingScreenWidgetState extends State<LoadingScreenWidget> {
                       ),
                     ),
                   ].divide(SizedBox(height: 20.0)).addToStart(SizedBox(height: 160.0)),
+                ),
+              ),
+            ),
+          if (!_model.showButtons&&( FFAppState().isFirstLaunchDone==true )&&FFAppState().splashScreenStatus == 'Enabled')
+
+            Positioned(
+              bottom: 32,
+              left: 27,
+              right: 27,
+              child: GestureDetector(
+                onTap: () async {
+                  FFAppState().update((){
+                    FFAppState().splashScreenStatus = 'Disabled';
+                  });
+                  },
+                child: Container(
+                  height: 60,
+                  decoration: BoxDecoration(
+                    color:FlutterFlowTheme.of(context).secondaryBackground,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  alignment: Alignment.center,
+                  child: Text(
+                    'SKIP NOW',
+                    style: FlutterFlowTheme.of(context).titleLarge.override(
+                      fontFamily: 'MonaSans',
+                      color:FlutterFlowTheme.of(context).tertiary200,
+                      fontWeight: FontWeight.w500,
+                      fontSize: 16,
+
+                      letterSpacing: 0.16,
+
+                    ),
+                  ),
                 ),
               ),
             ),

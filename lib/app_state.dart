@@ -34,6 +34,10 @@ class FFAppState extends ChangeNotifier {
 
     _safeInit(() {
 
+      _safeInit(() {
+        _isFirstLaunchDone = prefs.getBool('ff_isFirstLaunchDone') ?? false;
+      });
+
 
       if (prefs.containsKey('ff_user')) {
         try {
@@ -66,7 +70,7 @@ class FFAppState extends ChangeNotifier {
   }
 
   // In FFAppState
-  bool _hasSeenSplashPrompt = false;
+  bool _hasSeenSplashPrompt = true;
 
   bool get hasSeenSplashPrompt => _hasSeenSplashPrompt;
 
@@ -146,6 +150,18 @@ class FFAppState extends ChangeNotifier {
   set multicastAddress(String value) {
     _multicastAddress = value;
   }
+
+  // In FFAppState class
+
+  bool _isFirstLaunchDone = false; // default false
+
+  bool get isFirstLaunchDone => _isFirstLaunchDone;
+
+  set isFirstLaunchDone(bool value) {
+    _isFirstLaunchDone = value;
+    prefs.setBool('ff_isFirstLaunchDone', value);
+  }
+
 
   int _multicastPort = 9588;
 
