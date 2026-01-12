@@ -226,7 +226,6 @@ class _LoadingScreenWidgetState extends State<LoadingScreenWidget> {
               ),
             ),
           if (!_model.showButtons&&( FFAppState().isFirstLaunchDone==true )&&FFAppState().splashScreenStatus == 'Enabled')
-
             Positioned(
               bottom: 32,
               left: 27,
@@ -235,6 +234,9 @@ class _LoadingScreenWidgetState extends State<LoadingScreenWidget> {
                 onTap: () async {
                   FFAppState().update((){
                     FFAppState().splashScreenStatus = 'Disabled';
+                  });
+                  safeSetState(() {
+                    _model.showButtons = true;
                   });
                   },
                 child: Container(
