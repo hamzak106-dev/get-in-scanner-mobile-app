@@ -63,7 +63,6 @@ class _LoadingScreenWidgetState extends State<LoadingScreenWidget> {
   }
 
 
-
   @override
   void initState() {
     super.initState();
@@ -232,13 +231,19 @@ class _LoadingScreenWidgetState extends State<LoadingScreenWidget> {
               right: 27,
               child: GestureDetector(
                 onTap: () async {
-                  FFAppState().update((){
+                  FFAppState().update(() {
                     FFAppState().splashScreenStatus = 'Disabled';
                   });
-                  safeSetState(() {
-                    _model.showButtons = true;
-                  });
-                  },
+
+                  if (functions.checkJson(FFAppState().user.toMap()) && FFAppState().user.userId != 0) {
+                    await updateDeviceAppVersion();
+                    context.goNamed(DashBoardScreenWidget.routeName);
+                  } else {
+                    safeSetState(() {
+                      _model.showButtons = true;
+                    });
+                  }
+                },
                 child: Container(
                   height: 60,
                   decoration: BoxDecoration(
@@ -253,9 +258,7 @@ class _LoadingScreenWidgetState extends State<LoadingScreenWidget> {
                       color:FlutterFlowTheme.of(context).tertiary200,
                       fontWeight: FontWeight.w500,
                       fontSize: 16,
-
                       letterSpacing: 0.16,
-
                     ),
                   ),
                 ),
