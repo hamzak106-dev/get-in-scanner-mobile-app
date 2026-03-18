@@ -9,8 +9,7 @@ Future<int?> getPosEventId() async {
   final query = """
     SELECT event_id
     FROM events
-    WHERE creator_user = ${FFAppState().user.userId}
-    AND date(end_date) >= date('now') AND is_available_pos = 1 LIMIT 1;
+    WHERE date(end_date) >= date('now') AND is_available_pos = 1 LIMIT 1;
   """;
 
   final result = await db.get(query);

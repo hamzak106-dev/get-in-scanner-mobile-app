@@ -4,7 +4,6 @@ import 'package:g_e_t_i_n_scanner/components/amount_entry/amount_entry_widget.da
     show AmountEntryWidget;
 import 'package:g_e_t_i_n_scanner/components/event_wise_card_list/event_wise_card_list_widget.dart'
     show EventWiseCardListWidget;
-import 'package:g_e_t_i_n_scanner/flutter_flow/flutter_flow_util.dart';
 
 class QuickPayWidget extends StatefulWidget {
   final List<EventsRow> events;
@@ -31,16 +30,13 @@ class _QuickPayWidgetState extends State<QuickPayWidget> {
             events: widget.events,
             onEventSelected: (event) {
               widget.onEventSelected(event);
-              // safeSetState(() => selectedEvent = event);
             },
           )
         : AmountEntryWidget(
             eventId: selectedEvent!.eventId.toString(),
             onContinue: () {
               widget.onEventSelected(null);
-              // safeSetState(() {
-              //   selectedEvent = null;
-              // });
+
             },
           );
   }

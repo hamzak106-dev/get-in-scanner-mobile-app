@@ -1,6 +1,8 @@
 // Automatic FlutterFlow imports
 import 'dart:async';
+import 'dart:math' show min;
 
+import 'package:collection/collection.dart';
 import 'package:flutter/foundation.dart';
 import 'package:g_e_t_i_n_scanner/backend/schema/enums/enums.dart';
 import 'package:path/path.dart';
@@ -159,6 +161,10 @@ const powersync.Schema schema = powersync.Schema([
 
 late powersync.PowerSyncDatabase db;
 
+// PowerSync status subscription + connection guards
+StreamSubscription<powersync.SyncStatus>? powerSyncStatusSubscription;
+bool _powerSyncIsConnecting = false;
+
 //create one of these for each of your watch() queries
 StreamSubscription eventsSubscription = Stream<void>.empty().listen((event) {});
 StreamSubscription attendeesSubscription =
@@ -215,37 +221,28 @@ class SupabaseConnector extends powersync.PowerSyncBackendConnector {
     // Wait for pending session refresh if any
     await _refreshFuture;
 
-    // Use Supabase token for PowerSync
-    final session = Supabase.instance.client.auth.currentSession;
-    if (session == null) {
-      // Not logged in
+    // Ensure Supabase is initialized before accessing client
+    try {
+      final session = Supabase.instance.client.auth.currentSession;
+      if (session == null) {
+        return null;
+      }
+
+      final token = session.accessToken;
+      debugPrint('\nUser ID:\n${FFAppState().user.userId}\n\n');
+
+      return powersync.PowerSyncCredentials(
+          endpoint: FlavorHelper.appFlavor.powerSyncUrl,
+          token: token,
+          userId: "${FFAppState().user.userId}");
+    } catch (e) {
+      debugPrint('Error fetching credentials: $e');
       return null;
     }
-
-    // Use the access token to authenticate against PowerSync
-    final token = session.accessToken;
-
-    debugPrint('\nUser ID:\n${FFAppState().user.userId}\n\n');
-
-    return powersync.PowerSyncCredentials(
-        endpoint: FlavorHelper.appFlavor.powerSyncUrl,
-        token: token,
-        userId: "${FFAppState().user.userId}");
   }
 
   @override
   void invalidateCredentials() {
-    // Trigger a session refresh if auth fails on PowerSync.
-    // Generally, sessions should be refreshed automatically by Supabase.
-    // However, in some cases it can be a while before the session refresh is
-    // retried. We attempt to trigger the refresh as soon as we get an auth
-    // failure on PowerSync.
-    //
-    // This could happen if the device was offline for a while and the session
-    // expired, and nothing else attempt to use the session it in the meantime.
-    //
-    // Timeout the refresh call to avoid waiting for long retries,
-    // and ignore any errors. Errors will surface as expired tokens.
     _refreshFuture = Supabase.instance.client.auth
         .refreshSession()
         .timeout(const Duration(seconds: 5))
@@ -255,9 +252,6 @@ class SupabaseConnector extends powersync.PowerSyncBackendConnector {
   // Upload pending changes to Supabase.
   @override
   Future<void> uploadData(powersync.PowerSyncDatabase database) async {
-    // This function is called whenever there is data to upload, whether the
-    // device is online or offline.
-    // If this call throws an error, it is retried periodically.
     final transaction = await database.getNextCrudTransaction();
     if (transaction == null) {
       return;
@@ -266,8 +260,6 @@ class SupabaseConnector extends powersync.PowerSyncBackendConnector {
     final rest = Supabase.instance.client.rest;
     powersync.CrudEntry? lastOp;
     try {
-      // Note: If transactional consistency is important, use database functions
-      // or edge functions to process the entire transaction in a single call.
       for (var op in transaction.crud) {
         lastOp = op;
 
@@ -283,22 +275,13 @@ class SupabaseConnector extends powersync.PowerSyncBackendConnector {
         }
       }
 
-      // All operations successful.
       await transaction.complete();
     } on PostgrestException catch (e) {
       if (e.code != null &&
           fatalResponseCodes.any((re) => re.hasMatch(e.code!))) {
-        /// Instead of blocking the queue with these errors,
-        /// discard the (rest of the) transaction.
-        ///
-        /// Note that these errors typically indicate a bug in the application.
-        /// If protecting against data loss is important, save the failing records
-        /// elsewhere instead of discarding, and/or notify the user.
         print('Data upload error - discarding $lastOp' + e.toString());
         await transaction.complete();
       } else {
-        // Error may be retryable - e.g. network error or temporary server error.
-        // Throwing an error here causes this call to be retried after a delay.
         rethrow;
       }
     }
@@ -306,7 +289,11 @@ class SupabaseConnector extends powersync.PowerSyncBackendConnector {
 }
 
 bool isLoggedIn() {
-  return Supabase.instance.client.auth.currentSession?.accessToken != null;
+  try {
+    return Supabase.instance.client.auth.currentSession?.accessToken != null;
+  } catch (e) {
+    return false;
+  }
 }
 
 Future initPowerSync() async {
@@ -314,118 +301,55 @@ Future initPowerSync() async {
       schema: schema, path: await getDatabasePath());
   await db.initialize();
 
-  SupabaseConnector? currentConnector;
-
+  // If the user is already logged in, attempt to connect and attach listener
   if (isLoggedIn()) {
-    // If the user is already logged in, connect immediately.
-    // Otherwise, connect once logged in.
-    debugPrint(
-        '\nSupabase session token:\n${Supabase.instance.client.auth.currentSession?.accessToken}');
+    if (kDebugMode) debugPrint('\nPowerSync: user is logged in, attempting connect');
     var clientParam = getClientParam();
-    debugPrint('\nClientParam: $clientParam');
-    currentConnector = SupabaseConnector(db);
-    db.connect(connector: currentConnector, params: clientParam);
+    if (kDebugMode) debugPrint('\nPowerSync clientParam: $clientParam');
+    // currentConnector = SupabaseConnector(db);  // connector created inside tryConnectPowerSync
 
-    db.statusStream.listen(
-      (event) {
-        if (kDebugMode) {
-          print("=========== SYNC STATUS ============");
-          print(event.toString());
-        }
-
-        FFAppState().update(() {
-          var syncStatus = SyncStatusModelStruct(
-            hasSynced: event.uploadError == null,
-            lastSync: event.lastSyncedAt,
-            uploading: event.uploading,
-            downloading: event.downloading,
-            uploadError: event.uploadError != null,
-            downloadError: event.downloadError != null,
-            isConnected: event.connected,
-            prioritySyncedStatus: [
-              event.statusForPriority(powersync.BucketPriority(0)).hasSynced ??
-                  false,
-              event.statusForPriority(powersync.BucketPriority(1)).hasSynced ??
-                  false,
-              event.statusForPriority(powersync.BucketPriority(2)).hasSynced ??
-                  false,
-              event.statusForPriority(powersync.BucketPriority(3)).hasSynced ??
-                  false,
-            ],
-          );
-          if (syncStatus != FFAppState().syncStatus) {
-            // debugPrint("\n\n=========== SYNC STATUS UPDATE============");
-            FFAppState().syncStatus = syncStatus;
-          }
-        });
-      },
-    );
-  } else if (functions.checkJson(FFAppState().user.toMap()) &&
-      (FFAppState().user.userId != null)) {
+    // use guarded connect + subscription
+    await tryConnectPowerSync();
+  } else if (functions.checkJson(FFAppState().user.toMap())) {
     await supabaseLogin();
   }
 
-  Supabase.instance.client.auth.onAuthStateChange.listen((data) async {
-    final AuthChangeEvent event = data.event;
-    debugPrint("AuthChangeEvent ======>>> $event");
-    if (event == AuthChangeEvent.signedIn) {
-      // Connect to PowerSync when the user is signed in
-      var clientParam = getClientParam();
-      currentConnector = SupabaseConnector(db);
-      db.connect(connector: currentConnector!, params: clientParam);
+  // Listen for auth state changes and react accordingly
+  try {
+    Supabase.instance.client.auth.onAuthStateChange.listen((data) async {
+      final AuthChangeEvent event = data.event;
+      if (kDebugMode) debugPrint('AuthChangeEvent ======>>> $event');
 
-      debugPrint(
-          '\nSupabase session token:\n${Supabase.instance.client.auth.currentSession?.accessToken}');
-      debugPrint('\nPowerSyncUrl:\n${FlavorHelper.appFlavor.powerSyncUrl}');
-      debugPrint('\nClientParam: $clientParam');
-
-      db.statusStream.listen(
-        (event) {
-          // if (kDebugMode) {
-          //   debugPrint("=========== SYNC STATUS ============");
-          //   debugPrint(event.toString());
-          // }
-          var syncStatus = SyncStatusModelStruct(
-            hasSynced: event.uploadError == null,
-            lastSync: event.lastSyncedAt,
-            uploading: event.uploading,
-            downloading: event.downloading,
-            uploadError: event.uploadError != null,
-            downloadError: event.downloadError != null,
-            isConnected: event.connected,
-            prioritySyncedStatus: [
-              event.statusForPriority(powersync.BucketPriority(0)).hasSynced ??
-                  false,
-              event.statusForPriority(powersync.BucketPriority(1)).hasSynced ??
-                  false,
-              event.statusForPriority(powersync.BucketPriority(2)).hasSynced ??
-                  false,
-              event.statusForPriority(powersync.BucketPriority(3)).hasSynced ??
-                  false,
-            ],
-          );
-          if (syncStatus != FFAppState().syncStatus) {
-            // debugPrint("\n\n=========== SYNC STATUS UPDATE============");
-            FFAppState().syncStatus = syncStatus;
-          }
-        },
-      );
-    } else if (event == AuthChangeEvent.signedOut) {
-      // Implicit sign out - disconnect, but don't delete data
-      currentConnector = null;
-      await db.disconnectAndClear();
-    } else if (event == AuthChangeEvent.tokenRefreshed) {
-      // Supabase token refreshed - trigger token refresh for PowerSync.
-      currentConnector?.prefetchCredentials();
-    }
-  });
+      if (event == AuthChangeEvent.signedIn) {
+        // On sign-in, (re)establish connection
+        await tryConnectPowerSync();
+      } else if (event == AuthChangeEvent.signedOut) {
+        // On sign-out, cancel listeners and clear DB
+        try {
+          await powerSyncStatusSubscription?.cancel();
+        } catch (_) {}
+        try {
+          await db.disconnectAndClear();
+        } catch (_) {}
+      } else if (event == AuthChangeEvent.tokenRefreshed) {
+        // Token rotation: let connector refresh credentials if needed, then reconnect
+        try {
+          // The connector may be freshly created inside tryConnectPowerSync
+          await tryConnectPowerSync();
+        } catch (e) {
+          if (kDebugMode) debugPrint('[PowerSync] tokenRefreshed handling failed: $e');
+        }
+      }
+    });
+  } catch (e) {
+    if (kDebugMode) debugPrint('Error setting up onAuthStateChange listener: $e');
+  }
 
   return;
 }
 
 Future<String> getDatabasePath() async {
   var path = 'powersync-sqlite.db';
-  // getApplicationSupportDirectory is not supported on Web
   if (!kIsWeb) {
     final dir = await getApplicationSupportDirectory();
     path = join(dir.path, path);
@@ -437,16 +361,13 @@ Map<String, dynamic> getClientParam() {
   final user = FFAppState().user;
   final userId = user.userId;
 
-  // Handle non-scanner profiles
   if (user.profile != Profile.scanner) {
     return {'user_id': userId, 'type': user.profile?.name};
   }
 
-  // Query pin for scanner profile
   debugPrint("\n\n=========== PIN ============");
   debugPrint("=========== ${FFAppState().user.pinType} ============");
 
-  // Return profile type for system pins
   if (FFAppState().user.pinType == 'SYSTEM') {
     return {'user_id': userId, 'type': user.profile?.name};
   } else {
@@ -456,4 +377,149 @@ Map<String, dynamic> getClientParam() {
       'event_ids': FFAppState().user.eventIds,
     };
   }
+}
+
+Future<void> initializePowerSync() async {
+  const int maxRetries = 5;
+  int retryCount = 0;
+  const Duration initialDelay = Duration(seconds: 2);
+
+  while (retryCount < maxRetries) {
+    try {
+      await setupPowerSync();
+      debugPrint('PowerSync initialized successfully.');
+      break; 
+    } catch (e, stackTrace) {
+      retryCount++;
+      debugPrint(
+          'PowerSync initialization failed (Attempt: $retryCount/$maxRetries). Error: $e');
+      debugPrint('StackTrace: $stackTrace');
+
+      if (retryCount >= maxRetries) {
+        debugPrint('Max retry attempts reached. Unable to initialize PowerSync.');
+        rethrow; 
+      }
+
+      final delay = initialDelay * retryCount;
+      await Future.delayed(delay);
+    }
+  }
+}
+
+Future<void> setupPowerSync() async {
+  db = powersync.PowerSyncDatabase(
+    schema: schema,
+    path: await getDatabasePath(),
+  );
+  await db.initialize();
+}
+
+// Public helper: attach a resilient PowerSync status listener (reusable)
+Future<void> attachPowerSyncStatusListener() async {
+  try {
+    await powerSyncStatusSubscription?.cancel();
+  } catch (_) {}
+
+  powerSyncStatusSubscription = db.statusStream.listen(
+    (event) {
+      final entries = List.of(event.priorityStatusEntries)
+        ..sort((a, b) => powersync.StreamPriority.comparator(a.priority, b.priority));
+
+      bool syncedFor(int priority) {
+        return entries
+            .firstWhereOrNull((e) => e.priority.priorityNumber == priority)
+            ?.hasSynced ??
+            false;
+      }
+
+      FFAppState().update(() {
+        var syncStatus = SyncStatusModelStruct(
+          hasSynced: event.uploadError == null,
+          lastSync: event.lastSyncedAt,
+          uploading: event.uploading,
+          downloading: event.downloading,
+          uploadError: event.uploadError != null,
+          downloadError: event.downloadError != null,
+          isConnected: event.connected,
+          prioritySyncedStatus: [
+            syncedFor(0),
+            syncedFor(1),
+            syncedFor(2),
+            syncedFor(3),
+          ],
+        );
+        if (syncStatus != FFAppState().syncStatus) {
+          FFAppState().syncStatus = syncStatus;
+        }
+      });
+    },
+    onError: (Object e, StackTrace s) async {
+      if (kDebugMode) debugPrint('[PowerSync] statusStream error: $e');
+      final msg = e.toString();
+      if (msg.contains('Connection closed while receiving data') ||
+          msg.contains('ClientException') ||
+          msg.contains('SocketException')) {
+        // schedule reconnect with backoff
+        await tryConnectPowerSync();
+        if (db.connected) await attachPowerSyncStatusListener();
+      } else {
+        if (kDebugMode) debugPrint('[PowerSync] unexpected statusStream error: $e');
+        await tryConnectPowerSync();
+        if (db.connected) await attachPowerSyncStatusListener();
+      }
+    },
+    onDone: () async {
+      if (kDebugMode) debugPrint('[PowerSync] statusStream done');
+      // Server closed the stream — attempt reconnect
+      await tryConnectPowerSync();
+      if (db.connected) await attachPowerSyncStatusListener();
+    },
+    cancelOnError: false,
+  );
+}
+
+// Public helper: attempt a guarded connect with exponential backoff
+Future<void> tryConnectPowerSync({int maxAttempts = 6}) async {
+  if (!isLoggedIn()) return;
+  if (_powerSyncIsConnecting) return;
+
+  _powerSyncIsConnecting = true;
+  Duration delay = const Duration(seconds: 1);
+  int attempts = 0;
+
+  while (attempts < maxAttempts && isLoggedIn()) {
+    attempts++;
+    try {
+      if (db.connected) {
+        // already connected -> ensure listener attached
+        try {
+          await attachPowerSyncStatusListener();
+        } catch (_) {}
+        break;
+      }
+
+      // ensure previous connection closed
+      try {
+        await db.disconnect();
+      } catch (_) {}
+
+      final connector = SupabaseConnector(db);
+      await db.connect(connector: connector, params: getClientParam());
+
+      // connected — attach listener
+      try {
+        await attachPowerSyncStatusListener();
+      } catch (e) {
+        if (kDebugMode) debugPrint('[PowerSync] attach status listener failed in tryConnectPowerSync: $e');
+      }
+
+      break;
+    } catch (e) {
+      if (kDebugMode) debugPrint('[PowerSync] tryConnectPowerSync attempt $attempts failed: $e');
+      await Future.delayed(delay);
+      delay = Duration(seconds: min(delay.inSeconds * 2, 30));
+    }
+  }
+
+  _powerSyncIsConnecting = false;
 }

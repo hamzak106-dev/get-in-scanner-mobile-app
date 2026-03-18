@@ -1,3 +1,7 @@
+import 'dart:developer';
+
+import 'package:g_e_t_i_n_scanner/components/card_scanning/card_scanning_widget.dart' show CardScanningWidget;
+
 import '../../../components/sync/sync_widget.dart';
 import '../../../custom_code/actions/init_power_sync.dart';
 import '/backend/supabase/supabase.dart';
@@ -55,9 +59,27 @@ class _ManagerDashboardWidgetState extends State<ManagerDashboardWidget> {
           FFAppState().selectedEvent = functions.parseRowToJson(result?.toList(), null).toList().cast<dynamic>();
           FFAppState().update(() {});
           _model.events = result!.toList().cast<EventsRow>();
+          _model.isLoading = false;
           safeSetState(() {});
         },
       );
+      if (isiOS && !FFAppState().tapToPayTutorialDone) {
+        actions.getPosEventId().then((posEventId) async {
+          if(posEventId == null) return;
+          log(posEventId.toString());
+          await context.pushNamed(TapToPayDocumentWidget.routeName);
+          await showModalBottomSheet(
+              context: context,
+              isScrollControlled: true,
+              builder: (context) {
+                return CardScanningWidget(eventId: posEventId);
+              });
+          FFAppState().tapToPayTutorialDone = true;
+          FFAppState().update(() {});
+        }).catchError((e) {
+          log(e.toString());
+        });
+      }
     });
   }
 
@@ -206,7 +228,7 @@ class _ManagerDashboardWidgetState extends State<ManagerDashboardWidget> {
                       Expanded(
                         child: Builder(
                           builder: (context) {
-                            if (!(_model.events.isNotEmpty)) {
+                            if (_model.isLoading) {
                               return Builder(
                                 builder: (context) {
                                   final evnt = List.generate(

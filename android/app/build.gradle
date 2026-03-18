@@ -52,7 +52,7 @@ android {
     flavorDimensions "app"
     productFlavors {
         dev {
-            versionCode flutter.versionCode.toInteger() - 37
+            versionCode flutter.versionCode.toInteger()
             dimension "app"
             applicationId "xyz.getin.scanner.stage"
 

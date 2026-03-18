@@ -54,7 +54,7 @@ Future<void> watchAuthorisedAttendees(
       FFAppState().user.profile == Profile.producer ||
       FFAppState().user.profile == Profile.manager;
 
-  String watchQuery;
+  String watchQuery = '';
 
   if (hasFullAccess) {
     // Full access query
@@ -65,10 +65,18 @@ Future<void> watchAuthorisedAttendees(
     // Restricted access based on event and ticket permissions
 
     var pinId = FFAppState().user.pinId;
+    PinRow? pinRow;
+    if (pinId > 0) {
+      try {
+        var pinData = await db.get('SELECT * FROM pin WHERE uid = $pinId');
+        pinRow = PinRow(pinData);
+      } catch (e) {
+        print('watchAuthorisedAttendees: could not load pin uid=$pinId: $e');
+        pinRow = null;
+      }
+    }
 
-    var pinData = await db.get('SELECT * FROM pin WHERE uid = $pinId');
-    PinRow pinRow = PinRow(pinData);
-    if (pinRow.type == 'SYSTEM') {
+    if (pinRow != null && pinRow.type == 'SYSTEM') {
       watchQuery =
           "$baseQuery WHERE a.event_id IN (${eventIds.join(', ')}) ${onlyApproved ? 'AND a.ticket_status = 2' : ''} GROUP BY a.uid ORDER BY a.name ASC";
       // "SELECT * FROM attendee WHERE event_id IN (${eventIds.join(', ')}) ${onlyApproved ? 'AND ticket_status = 2' : ''} ORDER BY name ASC";
@@ -88,40 +96,64 @@ Future<void> watchAuthorisedAttendees(
         watchQuery =
             "$baseQuery WHERE a.event_id IN (${eventIds.join(', ')}) ${onlyApproved ? 'AND a.ticket_status = 2' : ''} GROUP BY a.uid ORDER BY a.name ASC";
         // "SELECT * FROM attendee WHERE event_id IN (${eventIds.join(', ')}) ${onlyApproved ? 'AND ticket_status = 2' : ''} ORDER BY name ASC";
-      } else {
+      } else if (pinRow != null) {
         String? allowEvents;
         if (pinRow.eventIds != null &&
             pinRow.eventIds!.isNotEmpty &&
             pinRow.eventIds != "null") {
-          allowEvents = pinRow.eventIds
-              ?.split(",")
-              .map(int.parse)
-              .where(eventIds.contains)
-              .join(",");
+          try {
+            allowEvents = pinRow.eventIds
+                ?.split(",")
+                .map((s) => int.parse(s.trim()))
+                .where(eventIds.contains)
+                .join(",");
+          } catch (e) {
+            print('watchAuthorisedAttendees: failed to parse pin.eventIds="${pinRow.eventIds}": $e');
+            allowEvents = null;
+          }
         }
 
         if (allowEvents?.isNotEmpty ?? false) {
           watchQuery =
               "$baseQuery WHERE a.event_id IN ($allowEvents) ${onlyApproved ? 'AND a.ticket_status = 2' : ''} GROUP BY a.uid ORDER BY a.name ASC";
           // "SELECT * FROM attendee WHERE event_id IN ($allowEvents) ${onlyApproved ? 'AND ticket_status = 2' : ''} ORDER BY name ASC";
-        } else {
+        } else if (pinRow.ticketIds != null &&
+            pinRow.ticketIds!.isNotEmpty &&
+            pinRow.ticketIds != "null") {
           // Filter by allowed ticket IDs
           String allowTicketIds = "";
-          var ticketResults = await db.getAll(
-              'SELECT DISTINCT ticket_id FROM attendee WHERE event_id IN(${eventIds.join(",")}) AND ticket_id IN(${pinRow.ticketIds})');
-          allowTicketIds = ticketResults
-              .map((json) => json['ticket_id'].toString())
-              .join(",");
-          //
-          watchQuery =
-              "$baseQuery WHERE a.ticket_id IN ($allowTicketIds) ${onlyApproved ? 'AND a.ticket_status = 2' : ''} GROUP BY a.uid ORDER BY a.name ASC";
-          // "SELECT * FROM attendee WHERE ticket_id IN ($allowTicketIds) ${onlyApproved ? 'AND ticket_status = 2' : ''} ORDER BY name ASC";
+          try {
+            var ticketResults = await db.getAll(
+                'SELECT DISTINCT ticket_id FROM attendee WHERE event_id IN(${eventIds.join(",")}) AND ticket_id IN(${pinRow.ticketIds})');
+            allowTicketIds = ticketResults
+                .map((json) => json['ticket_id'].toString())
+                .join(",");
+          } catch (e) {
+            print('watchAuthorisedAttendees: db.getAll failed when building ticket ids: $e');
+            allowTicketIds = '';
+          }
+          if (allowTicketIds.isNotEmpty) {
+            //
+            watchQuery =
+                "$baseQuery WHERE a.ticket_id IN ($allowTicketIds) ${onlyApproved ? 'AND a.ticket_status = 2' : ''} GROUP BY a.uid ORDER BY a.name ASC";
+          } else {
+            watchQuery = '';
+          }
+        } else {
+          watchQuery = '';
         }
+      } else {
+        watchQuery = '';
       }
     }
   }
 
   // Start watching database changes
+  if (watchQuery.isEmpty) {
+    callback([]);
+    return;
+  }
+
   var stream = db.watch(watchQuery);
   attendeesSubscription = stream.listen((data) {
     callback(data

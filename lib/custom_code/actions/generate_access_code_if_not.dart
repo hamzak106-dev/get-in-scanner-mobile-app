@@ -1,16 +1,16 @@
 // Automatic FlutterFlow imports
-import '/backend/supabase/supabase.dart';
-import '/flutter_flow/flutter_flow_util.dart';
-// Imports other custom actions
-// Imports custom functions
-import 'package:flutter/material.dart';
-
 // Begin custom action code
 // DO NOT REMOVE OR MODIFY THE CODE ABOVE!
 
 import 'dart:math';
 
+// Imports other custom actions
+// Imports custom functions
+import 'package:flutter/material.dart';
 import 'package:random_password_generator/random_password_generator.dart';
+
+import '/backend/supabase/supabase.dart';
+import '/flutter_flow/flutter_flow_util.dart';
 
 // import 'init_power_sync.dart';
 
@@ -39,7 +39,8 @@ Future generateAccessCodeIfNot(Function(bool)? callback) async {
     try {
       await CreatorsTable().insert({
         'user_id': FFAppState().user.userId,
-        'name': '${FFAppState().user.user.firstName} ${FFAppState().user.user.lastName}',
+        'name':
+            '${FFAppState().user.user.firstName} ${FFAppState().user.user.lastName}',
         'email': FFAppState().user.user.email,
         'refresh_token': FFAppState().user.auth.refresh,
         'session_token': FFAppState().user.auth.session,
@@ -51,7 +52,7 @@ Future generateAccessCodeIfNot(Function(bool)? callback) async {
       debugPrint("ERROR Insert User ====>> ${e.toString()}");
     }
   }
-
+  bool newPin = false;
   try {
     // var rowData = await db
     //     .get("SELECT * FROM pin WHERE user_id = ${FFAppState().user.userId}");
@@ -63,9 +64,10 @@ Future generateAccessCodeIfNot(Function(bool)? callback) async {
       ),
     );
     if (rowData.isNotEmpty) {
-      // return;
+
     } else {
       await generateAccessCode();
+      newPin = true;
     }
   } catch (e) {
     debugPrint("ERROR Pin where  ====>> ${e.toString()}");
@@ -75,8 +77,8 @@ Future generateAccessCodeIfNot(Function(bool)? callback) async {
       debugPrint("ERROR Select Pin with User ID ====>> ${e.toString()}");
       return null;
     }
-  } finally{
-    callback?.call(!userExist);
+  } finally {
+    callback?.call(newPin);
   }
 }
 
@@ -104,7 +106,8 @@ Future generateAccessCode() async {
         if (e.toString() == "Bad state: No element") {
           accessCode = aCode;
         } else {
-          debugPrint("ERROR Select Pin with access_code ====>> ${e.toString()}");
+          debugPrint(
+              "ERROR Select Pin with access_code ====>> ${e.toString()}");
         }
       }
     }

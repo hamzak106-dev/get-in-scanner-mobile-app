@@ -7,6 +7,7 @@ import '/flutter_flow/flutter_flow_util.dart';
 import '/flutter_flow/flutter_flow_widgets.dart';
 import '../../index.dart';
 import 'readytousetaptopay_model.dart';
+import '/custom_code/actions/index.dart' as actions;
 
 export 'readytousetaptopay_model.dart';
 
@@ -33,14 +34,9 @@ class _ReadytousetaptopayWidgetState extends State<ReadytousetaptopayWidget> {
     _model = createModel(context, () => ReadytousetaptopayModel());
     SchedulerBinding.instance.addPostFrameCallback((_) async {
       logFirebaseEvent('CARD_SCANNING_PAGE_card_scanning_ON_INIT_STATE');
-      await DeviceTable().update(
-        data: {'tap_to_pay_enabled': true},
-        matchingRows: (rows) => rows
-            .eqOrNull(
-              'device_id',
-              FFAppState().uuid,
-            )
-            .eqOrNull('user_id', FFAppState().user.userId),
+      await actions.enableTapToPay(
+        FFAppState().uuid,
+        FFAppState().user.userId,
       );
     });
   }
@@ -103,7 +99,7 @@ class _ReadytousetaptopayWidgetState extends State<ReadytousetaptopayWidget> {
                     Padding(
                       padding: EdgeInsetsDirectional.fromSTEB(0.0, 0.0, 0.0, 8.0),
                       child: Text(
-                        'YOU\'RE ARE READY TO USE TAP TO PAY ON IPHONE!',
+                        'YOU\'RE READY TO USE TAP TO PAY ON IPHONE!',
                         textAlign: TextAlign.center,
                         style: FlutterFlowTheme.of(context).bodyMedium.override(
                               fontFamily: 'Mona Sans',
@@ -115,7 +111,7 @@ class _ReadytousetaptopayWidgetState extends State<ReadytousetaptopayWidget> {
                       ),
                     ),
                     Text(
-                      'You can now accept payments from contactless credit and debit cards, apple pay, or other contactless payment devices using only your iphone.',
+                      'You can now accept payments from contactless credit and debit cards, apple pay, or other contactless payment devices using only your iPhone.',
                       textAlign: TextAlign.center,
                       style: FlutterFlowTheme.of(context).bodyMedium.override(
                             fontFamily: 'Mona Sans',
@@ -126,7 +122,13 @@ class _ReadytousetaptopayWidgetState extends State<ReadytousetaptopayWidget> {
                     ),
                     FFButtonWidget(
                       onPressed: () {
-                        context.goNamed(ScannerPosWidget.routeName);
+                        final navContext = appNavigatorKey.currentContext;
+                        Navigator.pop(context);
+                        if (navContext != null) {
+                          SchedulerBinding.instance.addPostFrameCallback((_) {
+                            navContext.pushNamed(ScannerPosWidget.routeName);
+                          });
+                        }
                       },
                       text: 'TRY A TEST TRANSACTION',
                       options: FFButtonOptions(
@@ -151,7 +153,7 @@ class _ReadytousetaptopayWidgetState extends State<ReadytousetaptopayWidget> {
                     ),
                     GestureDetector(
                       onTap: () {
-                        context.safePop();
+                        Navigator.pop(context);
                       },
                       child: Container(
                         decoration: BoxDecoration(),

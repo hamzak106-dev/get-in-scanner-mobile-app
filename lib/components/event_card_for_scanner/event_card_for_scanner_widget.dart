@@ -92,12 +92,11 @@ class _EventCardForScannerWidgetState extends State<EventCardForScannerWidget> {
                           ),
                     ),
                   ),
-                  if (false)
-                    Icon(
-                      FFIcons.kicArrowNext,
-                      color: FlutterFlowTheme.of(context).secondaryText,
-                      size: 20.0,
-                    ),
+                  Icon(
+                    FFIcons.kicArrowNext,
+                    color: FlutterFlowTheme.of(context).secondaryText,
+                    size: 20.0,
+                  ),
                 ].divide(SizedBox(width: 12.0)),
               ),
               Flexible(
@@ -140,18 +139,24 @@ class _EventCardForScannerWidgetState extends State<EventCardForScannerWidget> {
                             ),
                             Builder(
                               builder: (context) {
-                                print(FFAppState()
-                                    .syncStatus
-                                    .prioritySyncedStatus
-                                    .elementAtOrNull(widget!.event!.priority!));
-                                if ((widget!.event?.syncStatus != 'InProgress') &&
-                                    FFAppState()
-                                        .syncStatus
-                                        .prioritySyncedStatus
-                                        .elementAtOrNull(widget!.event!.priority!)!) {
+                                // Defensive null checks to avoid runtime null-check errors
+                                final ev = widget.event;
+                                final syncStatus = FFAppState().syncStatus;
+                                final priorityList = syncStatus.prioritySyncedStatus; // getter returns non-null
+                                final int? pr = ev?.priority;
+
+                                // Determine whether this priority index is marked as synced
+                                final bool isPrioritySynced =
+                                    (pr != null && pr >= 0 && pr < priorityList.length)
+                                        ? (priorityList[pr] == true)
+                                        : false;
+
+                                final bool inProgress = ev?.syncStatus == 'InProgress';
+
+                                if (!inProgress && isPrioritySynced) {
                                   return Text(
                                     valueOrDefault<String>(
-                                      widget.event?.totalAttendees?.toString(),
+                                      ev?.totalAttendees?.toString(),
                                       '0',
                                     ),
                                     style: FlutterFlowTheme.of(context).bodyMedium.override(

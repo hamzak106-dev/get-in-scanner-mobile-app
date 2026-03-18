@@ -37,13 +37,18 @@ Future<ScanResult> checkPermissionForScanTicket(
     var pinId = FFAppState().user.pinId;
     PinRow? pinRow;
     if (pinId > 0) {
-      var pinData = await db.get('SELECT * FROM pin WHERE uid = $pinId');
-      pinRow = PinRow(pinData);
+      try {
+        var pinData = await db.get('SELECT * FROM pin WHERE uid = $pinId');
+        pinRow = PinRow(pinData);
+      } catch (e) {
+        print('checkPermissionForScanTicket: could not load pin uid=$pinId: $e');
+        pinRow = null;
+      }
 
       // Check system access or all events permission
-      if (pinRow.type == 'SYSTEM' ||
+      if (pinRow != null && (pinRow.type == 'SYSTEM' ||
           await actions.isPermissionSelected(
-              pinRow.permissions, AccessPermission.allEvents)) {
+              pinRow.permissions, AccessPermission.allEvents))) {
         return ScanResult.VALID;
       }
     }
@@ -54,26 +59,34 @@ Future<ScanResult> checkPermissionForScanTicket(
       var attendee = AttendeeRow(Map<String, dynamic>.from(rowData));
 
       List<int> events = [];
-      if (pinRow!.eventIds != null &&
-          pinRow.eventIds!.isNotEmpty &&
-          pinRow.eventIds != "null") {
-        events = pinRow.eventIds
-                ?.split(",")
-                .toList()
-                .map((e) => int.parse(e))
-                .toList() ??
-            [];
+      if (pinRow != null && pinRow.eventIds != null &&
+          pinRow.eventIds!.isNotEmpty && pinRow.eventIds != "null") {
+        try {
+          events = pinRow.eventIds
+                  ?.split(",")
+                  .toList()
+                  .map((e) => int.parse(e))
+                  .toList() ??
+              [];
+        } catch (e) {
+          print('checkPermissionForScanTicket: failed to parse pinRow.eventIds: $e');
+          events = [];
+        }
       }
       List<int> tickets = [];
-      if (pinRow.ticketIds != null &&
-          pinRow.ticketIds!.isNotEmpty &&
-          pinRow.ticketIds != "null") {
-        tickets = pinRow.ticketIds
-                ?.split(",")
-                .toList()
-                .map((e) => int.parse(e))
-                .toList() ??
-            [];
+      if (pinRow != null && pinRow.ticketIds != null &&
+          pinRow.ticketIds!.isNotEmpty && pinRow.ticketIds != "null") {
+        try {
+          tickets = pinRow.ticketIds
+                  ?.split(",")
+                  .toList()
+                  .map((e) => int.parse(e))
+                  .toList() ??
+              [];
+        } catch (e) {
+          print('checkPermissionForScanTicket: failed to parse pinRow.ticketIds: $e');
+          tickets = [];
+        }
       }
       if (events.contains(attendee.eventId) ||
           tickets.contains(attendee.ticketId)) {

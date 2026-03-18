@@ -1,5 +1,6 @@
 import '../../custom_code/actions/init_power_sync.dart';
 import '../no_event_found/no_event_found_widget.dart';
+import '/components/loading_with_message/loading_with_message_widget.dart';
 import '/backend/schema/enums/enums.dart';
 import '/backend/supabase/supabase.dart';
 import '/components/event_card_for_scanner/event_card_for_scanner_widget.dart';
@@ -301,10 +302,7 @@ class _EventSelectionBottomSheetWidgetState
                             .toUtc();
                         return Builder(
                           builder: (context) {
-                            if (!(_model.events
-                                .where((e) => e.syncStatus == 'InProgress' && e.priority == 1)
-                                .toList()
-                                .isNotEmpty)) {
+
                               return Column(
                                 mainAxisSize: MainAxisSize.max,
                                 children: [
@@ -413,88 +411,7 @@ class _EventSelectionBottomSheetWidgetState
                                   ),
                                 ],
                               );
-                            } else {
-                              return Column(
-                                mainAxisSize: MainAxisSize.min,
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  wrapWithModel(
-                                    model: _model.riveAnimationViewModel1,
-                                    updateCallback: () => safeSetState(() {}),
-                                    child: const RiveAnimationViewWidget(
-                                      fillColor: Colors.transparent,
-                                      type: RiveAnimType.EventSyncing,
-                                    ),
-                                  ),
-                                  if (_model.events
-                                      .where(
-                                          (e) => e.syncStatus == 'InProgress' && e.priority == 1)
-                                      .toList()
-                                      .isNotEmpty)
-                                    Column(
-                                      mainAxisSize: MainAxisSize.max,
-                                      children: [
-                                        Padding(
-                                          padding: const EdgeInsetsDirectional
-                                              .fromSTEB(44.0, 0.0, 44.0, 0.0),
-                                          child: LinearPercentIndicator(
-                                            percent: valueOrDefault<double>(
-                                              (_model.events
-                                                          .where((e) =>
-                                                              e.syncStatus ==
-                                                              'Completed')
-                                                          .toList()
-                                                          .length +
-                                                      1) /
-                                                  _model.events.length,
-                                              0.0,
-                                            ),
-                                            lineHeight: 10.0,
-                                            animation: true,
-                                            animateFromLastPercent: true,
-                                            progressColor:
-                                                FlutterFlowTheme.of(context)
-                                                    .secondary,
-                                            backgroundColor:
-                                                FlutterFlowTheme.of(context)
-                                                    .info,
-                                            barRadius:
-                                                const Radius.circular(50.0),
-                                            padding: EdgeInsets.zero,
-                                          ),
-                                        ),
-                                        Column(
-                                          mainAxisSize: MainAxisSize.max,
-                                          children: [
-                                            Text(
-                                              '${(_model.events.where((e) => e.syncStatus == 'Completed').toList().length + 1).toString()} of ${_model.events.length.toString()}',
-                                              style:
-                                                  FlutterFlowTheme.of(context)
-                                                      .bodyMedium
-                                                      .override(
-                                                        fontFamily: 'MonaSans',
-                                                        letterSpacing: 0.0,
 
-                                                      ),
-                                            ),
-                                            Text(
-                                              'Events Are Loading',
-                                              style:
-                                                  FlutterFlowTheme.of(context)
-                                                      .bodyMedium
-                                                      .override(
-                                                        fontFamily: 'MonaSans',
-                                                        letterSpacing: 0.0,
-
-                                                      ),
-                                            ),
-                                          ].divide(const SizedBox(height: 4.0)),
-                                        ),
-                                      ].divide(const SizedBox(height: 16.0)),
-                                    ),
-                                ].divide(const SizedBox(height: 16.0)),
-                              );
-                            }
                           },
                         );
                         } else {

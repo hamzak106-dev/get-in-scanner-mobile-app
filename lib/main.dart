@@ -10,7 +10,6 @@ import 'package:g_e_t_i_n_scanner/backend/schema/enums/enums.dart';
 import 'package:g_e_t_i_n_scanner/flutter_flow/custom_functions.dart';
 import 'package:provider/provider.dart';
 import 'package:upgrader/upgrader.dart';
-
 import '/backend/supabase/supabase.dart';
 import '/custom_code/actions/index.dart' as actions;
 import '/flutter_flow/flutter_flow_theme.dart';
@@ -24,6 +23,7 @@ import 'index.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
   actions.checkForUpdates();
   GoRouter.optionURLReflectsImperativeAPIs = true;
   usePathUrlStrategy();
@@ -193,23 +193,35 @@ class _NavBarPageState extends State<NavBarPage> {
   }
 
   @override
+  void didUpdateWidget(NavBarPage oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.initialPage != null && widget.initialPage != _currentPageName) {
+      setState(() {
+        _currentPageName = widget.initialPage!;
+        _currentPage = widget.page;
+      });
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     String? allowTapToPay = getRemoteConfigString('allow_tap_to_pay');
 
-    bool isAllowTapToPay = FlavorHelper.prodFlavor
-        ? (isAndroid &&
-            () {
-              if (allowTapToPay == null || allowTapToPay.isEmpty) {
-                // Empty → allow all
-                return true;
-              }
-              // Split by "." and check if user email exists
-              final allowedEmails =
-                  allowTapToPay.split(',').map((e) => e.trim()).toList();
-              print("Allowed email " + allowedEmails.toString());
-              return allowedEmails.contains(FFAppState().user.user.email);
-            }())
-        : true;
+    bool isAllowTapToPay = true;
+    // FlavorHelper.prodFlavor
+    //     ? (isAndroid &&
+    //         () {
+    //           if (allowTapToPay == null || allowTapToPay.isEmpty) {
+    //             // Empty → allow all
+    //             return true;
+    //           }
+    //           // Split by "." and check if user email exists
+    //           final allowedEmails =
+    //               allowTapToPay.split(',').map((e) => e.trim()).toList();
+    //           print("Allowed email " + allowedEmails.toString());
+    //           return allowedEmails.contains(FFAppState().user.user.email);
+    //         }())
+    //     : true;
 
     final tabs = {
       if (isAllowTapToPay) 'ScannerPos': ScannerPosWidget(),

@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/scheduler.dart';
-import 'package:g_e_t_i_n_scanner/components/card_scanning/card_scanning_widget.dart'
-    show CardScanningWidget;
-import 'package:g_e_t_i_n_scanner/pages/tap_to_pay/tap_to_pay_document/tap_to_pay_document_widget.dart' show TapToPayDocumentWidget;
+import 'package:g_e_t_i_n_scanner/pages/tap_to_pay/tap_to_pay_document/tap_to_pay_document_widget.dart'
+    show TapToPayDocumentWidget;
 
 import '/flutter_flow/flutter_flow_icon_button.dart';
 import '/flutter_flow/flutter_flow_theme.dart';
@@ -12,15 +10,17 @@ import 'tutorials_model.dart';
 export 'tutorials_model.dart';
 
 class TutorialsWidget extends StatefulWidget {
+  final String? termsURL;
+
   const TutorialsWidget({
     super.key,
+    this.termsURL,
   });
-
 
   // final PinRow? pinData;
 
   static String routeName = 'TUTORIALS';
-  static String routePath = '/tutorials';
+  static String routePath = '/tutorials/:url';
 
   @override
   State<TutorialsWidget> createState() => _TutorialsWidgetState();
@@ -28,6 +28,7 @@ class TutorialsWidget extends StatefulWidget {
 
 class _TutorialsWidgetState extends State<TutorialsWidget> {
   late TutorialsModel _model;
+  String? _actualTermsURL;
 
   final scaffoldKey = GlobalKey<ScaffoldState>();
 
@@ -37,7 +38,13 @@ class _TutorialsWidgetState extends State<TutorialsWidget> {
     _model = createModel(context, () => TutorialsModel());
 
     logFirebaseEvent('screen_view', parameters: {'screen_name': 'TUTORIALS'});
-    // On page load action.
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final params = GoRouterState.of(context).pathParameters;
+    _actualTermsURL = params['url'] ?? widget.termsURL;
   }
 
   @override
@@ -86,7 +93,7 @@ class _TutorialsWidgetState extends State<TutorialsWidget> {
                       child: Align(
                         alignment: AlignmentDirectional(0.0, 0.0),
                         child: Text(
-                          'TUTORIALS',
+                          'TAP TO PAY',
                           style:
                               FlutterFlowTheme.of(context).titleSmall.override(
                                     fontFamily: 'Mona Sans',
@@ -98,9 +105,6 @@ class _TutorialsWidgetState extends State<TutorialsWidget> {
                   ].addToEnd(SizedBox(width: 40.0)),
                 ),
               ),
-              // Divider(
-              //   height: 1,
-              // ),
               Expanded(
                 child: Form(
                   key: _model.formKey,
@@ -114,7 +118,8 @@ class _TutorialsWidgetState extends State<TutorialsWidget> {
                         children: [
                           GestureDetector(
                             onTap: () {
-                              context.pushNamed(TapToPayDocumentWidget.routeName);
+                              context
+                                  .pushNamed(TapToPayDocumentWidget.routeName);
                             },
                             child: Row(
                               mainAxisSize: MainAxisSize.max,
@@ -126,7 +131,7 @@ class _TutorialsWidgetState extends State<TutorialsWidget> {
                                         CrossAxisAlignment.start,
                                     children: [
                                       Text(
-                                        'Get started with Tap to Pay on iphone',
+                                        'Get started with Tap to Pay on iPhone',
                                         style: FlutterFlowTheme.of(context)
                                             .bodyMedium
                                             .override(
@@ -137,6 +142,70 @@ class _TutorialsWidgetState extends State<TutorialsWidget> {
                                       ),
                                       Text(
                                         'Learn how to take payments on your iPhone with Tap to Pay ',
+                                        style: FlutterFlowTheme.of(context)
+                                            .bodyMedium
+                                            .override(
+                                              fontFamily: 'Mona Sans',
+                                              color:
+                                                  FlutterFlowTheme.of(context)
+                                                      .info,
+                                              letterSpacing: 0.0,
+                                            ),
+                                      ),
+                                    ].divide(SizedBox(height: 4.0)),
+                                  ),
+                                ),
+                                Column(
+                                  mainAxisSize: MainAxisSize.max,
+                                  children: [
+                                    Icon(
+                                      Icons.arrow_forward_ios_outlined,
+                                      color: FlutterFlowTheme.of(context)
+                                          .primaryText,
+                                      size: 24.0,
+                                    ),
+                                  ],
+                                ),
+                              ].divide(SizedBox(width: 24.0)),
+                            ),
+                          ),
+                          GestureDetector(
+                            onTap: () async {
+                              logFirebaseEvent(
+                                  'TUTORIALS_PAGE_Row_terms_and_conditions_ON_TAP');
+                              try {
+                                print('Launching URL: $_actualTermsURL');
+                                if (_actualTermsURL != null &&
+                                    _actualTermsURL!.isNotEmpty) {
+                                  await launchURL(_actualTermsURL!);
+                                } else {
+                                  print('ERROR: No URL available');
+                                }
+                              } catch (e) {
+                                print('Could not launch URL: $e');
+                              }
+                            },
+                            child: Row(
+                              mainAxisSize: MainAxisSize.max,
+                              children: [
+                                Expanded(
+                                  child: Column(
+                                    mainAxisSize: MainAxisSize.max,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        'Terms and conditions',
+                                        style: FlutterFlowTheme.of(context)
+                                            .bodyMedium
+                                            .override(
+                                              fontFamily: 'Mona Sans',
+                                              fontSize: 14.0,
+                                              letterSpacing: 0.0,
+                                            ),
+                                      ),
+                                      Text(
+                                        'Check out our privacy policy for details on the tap to pay feature.',
                                         style: FlutterFlowTheme.of(context)
                                             .bodyMedium
                                             .override(

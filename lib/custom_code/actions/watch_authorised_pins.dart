@@ -35,11 +35,17 @@ Future<void> watchAuthorisedPins(Future Function(List<PinRow>? result) callback)
     var pinId = FFAppState().user.pinId;
 
     if (pinId > 0) {
-      var pinData = await db.get('SELECT * FROM pin WHERE uid = $pinId');
-      PinRow pin = PinRow(pinData);
+      PinRow? pin;
+      try {
+        var pinData = await db.get('SELECT * FROM pin WHERE uid = $pinId');
+        pin = PinRow(pinData);
+      } catch (e) {
+        print('watchAuthorisedPins: could not load pin uid=$pinId: $e');
+        pin = null;
+      }
 
       // Grant full access if the pin type is SYSTEM
-      hasFullAccess = pin.type == 'SYSTEM';
+      hasFullAccess = pin?.type == 'SYSTEM' ? true : hasFullAccess;
     }
     // Set query based on access level
     watchQuery = hasFullAccess

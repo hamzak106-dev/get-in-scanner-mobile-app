@@ -70,15 +70,20 @@ class _AttendeeCardWidgetState extends State<AttendeeCardWidget> {
                   mainAxisSize: MainAxisSize.max,
                   mainAxisAlignment: MainAxisAlignment.start,
                   children: [
-                    Text(
-                      widget.attendee!.name ?? "",
-                      style: FlutterFlowTheme.of(context).bodyMedium.override(
-                            fontFamily: 'MonaSans',
-                            fontSize: 16.0,
-                            letterSpacing: 0.0,
-                            fontWeight: FontWeight.w600,
-                            lineHeight: 1.5,
-                          ),
+                    Expanded(
+                      child: Text(
+                        widget.attendee!.name ?? "",
+                        style: FlutterFlowTheme.of(context).bodyMedium.override(
+                              fontFamily: 'MonaSans',
+                              fontSize: 16.0,
+                              letterSpacing: 0.0,
+                              fontWeight: FontWeight.w600,
+                              lineHeight: 1.5,
+                            ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      
+                      ),
                     ),
                     Builder(
                       builder: (context) {

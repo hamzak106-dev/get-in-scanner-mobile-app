@@ -1,5 +1,5 @@
 import 'package:flutter/foundation.dart';
-import 'package:supabase_flutter/supabase_flutter.dart' hide Provider;
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../config/flavor_helper.dart';
 
@@ -12,9 +12,8 @@ class SupaFlow {
 
   static SupaFlow get instance => _instance ??= SupaFlow._();
 
-  final _supabase = Supabase.instance.client;
-
-  static SupabaseClient get client => instance._supabase;
+  // Lazily return the Supabase client instead of capturing it during construction.
+  static SupabaseClient get client => Supabase.instance.client;
 
   static Future initialize() => Supabase.initialize(
         url: FlavorHelper.appFlavor.sbApiUrl,

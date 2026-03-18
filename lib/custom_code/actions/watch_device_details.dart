@@ -20,9 +20,20 @@ Future<void> watchDeviceDetails(
   Future Function(List<DeviceRow>? result) callback,
   int deviceID,
 ) async {
-  if (db.currentStatus.lastSyncedAt != null &&
-      deviceID > 0 &&
-      db.currentStatus.statusForPriority(BucketPriority(0)).lastSyncedAt != null) {
+  // Safely check whether the stream priority status has a lastSyncedAt without
+  // invoking statusForPriority directly inside the condition (this can trigger
+  // an assertion if internal invariant is violated).
+  bool priorityHasSynced = false;
+  try {
+    final priorityStatus = db.currentStatus.statusForPriority(StreamPriority(0));
+    priorityHasSynced = priorityStatus.lastSyncedAt != null;
+  } catch (e) {
+    // If we hit an assertion or any other error, log and treat as not synced.
+    print('watchDeviceDetails: unable to read priority status safely: $e');
+    priorityHasSynced = false;
+  }
+
+  if (db.currentStatus.lastSyncedAt != null && deviceID > 0 && priorityHasSynced) {
     try {
       await Future.delayed(const Duration(seconds: 15));
 

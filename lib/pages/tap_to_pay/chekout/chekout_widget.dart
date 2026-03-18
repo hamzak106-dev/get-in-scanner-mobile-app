@@ -229,7 +229,7 @@ class _ChekoutWidgetState extends State<ChekoutWidget>
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'Preparing Tap to Pay${isiOS ? ' on iphone' : ''}',
+                            'Preparing Tap to Pay${isiOS ? ' on iPhone' : ''}',
                             style: FlutterFlowTheme.of(context)
                                 .bodyMedium
                                 .override(

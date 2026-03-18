@@ -22,7 +22,7 @@ Future watchAuthorisedCheckInLogs(
       FFAppState().user.profile == Profile.producer ||
       FFAppState().user.profile == Profile.manager;
 
-  String watchQuery;
+  String watchQuery = '';
 
   if (hasFullAccess) {
     // Full access query
@@ -31,29 +31,60 @@ Future watchAuthorisedCheckInLogs(
     // Restricted access: Only allow logs for permitted events
 
     var pinId = FFAppState().user.pinId;
-    var pinData = await db.get('SELECT * FROM pin WHERE uid = $pinId');
-    PinRow pin = PinRow(pinData);
+    PinRow? pin;
+    if (pinId > 0) {
+      try {
+        var pinData = await db.get('SELECT * FROM pin WHERE uid = $pinId');
+        pin = PinRow(pinData);
+      } catch (e) {
+        print('watchAuthorisedCheckInLogs: could not load pin uid=$pinId: $e');
+        pin = null;
+      }
+    }
 
-    if (pin.type == 'SYSTEM' || await actions.isPermissionSelected(pin.permissions, AccessPermission.allEvents)) {
+    if (pin != null && (pin.type == 'SYSTEM' || await actions.isPermissionSelected(pin.permissions, AccessPermission.allEvents))) {
       watchQuery = "SELECT * FROM check_in_logs WHERE event_id IN (${eventIds.join(', ')}) ORDER BY scan_at DESC";
-    } else {
+    } else if (pin != null) {
       String? allowEvents;
       if (pin.eventIds != null && pin.eventIds!.isNotEmpty && pin.eventIds != "null") {
-        allowEvents = pin.eventIds?.split(",").map(int.parse).where(eventIds.contains).join(",");
+        try {
+          allowEvents = pin.eventIds?.split(",").map((s) => int.parse(s.trim())).where(eventIds.contains).join(",");
+        } catch (e) {
+          print('watchAuthorisedCheckInLogs: failed to parse pin.eventIds="${pin.eventIds}": $e');
+          allowEvents = null;
+        }
       }
 
       if (allowEvents?.isNotEmpty ?? false) {
         watchQuery = "SELECT * FROM check_in_logs WHERE event_id IN ($allowEvents) ORDER BY scan_at DESC";
-      } else {
-        // Filter by allowed ticket IDs
+      } else if (pin.ticketIds != null && pin.ticketIds!.isNotEmpty && pin.ticketIds != 'null') {
+        // Filter by allowed attendee IDs derived from ticketIds
         String allowAttendeeIds = "";
-        var attendeeIdResult = await db.getAll(
-            'SELECT DISTINCT uid FROM attendee WHERE event_id IN(${eventIds.join(",")}) AND ticket_id IN(${pin.ticketIds})');
-        allowAttendeeIds = attendeeIdResult.map((json) => json['uid'].toString()).join(",");
+        try {
+          var attendeeIdResult = await db.getAll(
+              'SELECT DISTINCT uid FROM attendee WHERE event_id IN(${eventIds.join(",")}) AND ticket_id IN(${pin.ticketIds})');
+          allowAttendeeIds = attendeeIdResult.map((json) => json['uid'].toString()).join(",");
+        } catch (e) {
+          print('watchAuthorisedCheckInLogs: db.getAll failed when building attendee ids: $e');
+          allowAttendeeIds = '';
+        }
 
-        watchQuery = "SELECT * FROM check_in_logs WHERE attendee_id IN ($allowAttendeeIds) ORDER BY scan_at DESC";
+        if (allowAttendeeIds.isNotEmpty) {
+          watchQuery = "SELECT * FROM check_in_logs WHERE attendee_id IN ($allowAttendeeIds) ORDER BY scan_at DESC";
+        } else {
+          watchQuery = '';
+        }
+      } else {
+        watchQuery = '';
       }
+    } else {
+      watchQuery = '';
     }
+  }
+
+  if (watchQuery.isEmpty) {
+    callback([]);
+    return;
   }
 
   // Start watching database changes

@@ -25,15 +25,17 @@ class FFAppState extends ChangeNotifier {
       _hasSeenSplashPrompt = prefs.getBool('ff_hasSeenSplashPrompt') ?? false;
     });
 
-
     _safeInit(() {
       if (prefs.containsKey('ff_splashScreenStatus')) {
-        _splashScreenStatus = prefs.getString('ff_splashScreenStatus') ?? 'Enabled';
+        _splashScreenStatus =
+            prefs.getString('ff_splashScreenStatus') ?? 'Enabled';
       }
     });
 
     _safeInit(() {
-
+      _safeInit(() {
+        _isFirstLaunchDone = prefs.getBool('ff_isFirstLaunchDone') ?? false;
+      });
 
       if (prefs.containsKey('ff_user')) {
         try {
@@ -52,6 +54,14 @@ class FFAppState extends ChangeNotifier {
     _safeInit(() {
       _hasFirstSync = prefs.getBool('ff_hasFirstSync') ?? _hasFirstSync;
     });
+
+    _safeInit(() {
+      _uuid = prefs.getString('ff_uuid') ?? _uuid;
+    });
+
+    _safeInit(() {
+      _tapToPayEnabled = prefs.getBool('ff_tapToPayEnabled') ?? _tapToPayEnabled;
+    });
   }
 
   // Default splash screen status
@@ -66,7 +76,7 @@ class FFAppState extends ChangeNotifier {
   }
 
   // In FFAppState
-  bool _hasSeenSplashPrompt = false;
+  bool _hasSeenSplashPrompt = true;
 
   bool get hasSeenSplashPrompt => _hasSeenSplashPrompt;
 
@@ -74,7 +84,6 @@ class FFAppState extends ChangeNotifier {
     _hasSeenSplashPrompt = value;
     prefs.setBool('ff_hasSeenSplashPrompt', value);
   }
-
 
   void update(VoidCallback callback) {
     callback();
@@ -98,6 +107,16 @@ class FFAppState extends ChangeNotifier {
 
   set uuid(String value) {
     _uuid = value;
+    prefs.setString('ff_uuid', value);
+  }
+
+  bool _tapToPayEnabled = false;
+
+  bool get tapToPayEnabled => _tapToPayEnabled;
+
+  set tapToPayEnabled(bool value) {
+    _tapToPayEnabled = value;
+    prefs.setBool('ff_tapToPayEnabled', value);
   }
 
   String _deviceName = '';
@@ -145,6 +164,17 @@ class FFAppState extends ChangeNotifier {
 
   set multicastAddress(String value) {
     _multicastAddress = value;
+  }
+
+  // In FFAppState class
+
+  bool _isFirstLaunchDone = false; // default false
+
+  bool get isFirstLaunchDone => _isFirstLaunchDone;
+
+  set isFirstLaunchDone(bool value) {
+    _isFirstLaunchDone = value;
+    prefs.setBool('ff_isFirstLaunchDone', value);
   }
 
   int _multicastPort = 9588;
@@ -216,7 +246,6 @@ void _safeInit(Function() initializeField) {
     initializeField();
   } catch (_) {}
 }
-
 
 Future _safeInitAsync(Function() initializeField) async {
   try {

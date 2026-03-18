@@ -2,7 +2,6 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
-import 'package:g_e_t_i_n_scanner/components/card_scanning/card_scanning_widget.dart';
 import 'package:percent_indicator/linear_percent_indicator.dart';
 import 'package:percent_indicator/percent_indicator.dart';
 import 'package:powersync/powersync.dart' as powersync;
@@ -50,15 +49,20 @@ class _DashBoardScreenWidgetState extends State<DashBoardScreenWidget> {
         parameters: {'screen_name': 'DashBoardScreen'});
     // On page load action.
     SchedulerBinding.instance.addPostFrameCallback((_) async {
+      if (!mounted) return;
       logFirebaseEvent('DASH_BOARD_SCREEN_DashBoardScreen_ON_INI');
+      bool isSynced = !FFAppState().hasFirstSync;
+      print("I am here checking is syncing ::: $isSynced");
       if (!FFAppState().hasFirstSync) {
         _model.topBannerVisible = true;
         _model.messageSyncing = 'Syncing Started ...';
         _model.bannerColor = FlutterFlowTheme.of(context).accent3;
         await action_blocks.syncData(context);
+        if (!mounted) return;
         _model.messageSyncing = 'Syncing Complete.';
         _model.bannerColor = FlutterFlowTheme.of(context).success;
         await Future.delayed(const Duration(milliseconds: 1000));
+        if (!mounted) return;
         _model.topBannerVisible = false;
         FFAppState().hasFirstSync = true;
         safeSetState(() {});
@@ -66,6 +70,7 @@ class _DashBoardScreenWidgetState extends State<DashBoardScreenWidget> {
 
       await actions.watchDeviceDetails(
         (result) async {
+          if (!mounted) return;
           if (!(result != null && (result).isNotEmpty) &&
               !_model.isDeleteDialogOpen) {
             await showDialog(
@@ -91,7 +96,10 @@ class _DashBoardScreenWidgetState extends State<DashBoardScreenWidget> {
                   ),
                 );
               },
-            ).then((value) => safeSetState(() => _model.deleteAccount = value));
+            ).then((value) {
+              if (!mounted) return;
+              safeSetState(() => _model.deleteAccount = value);
+            });
 
             _model.isDeleteDialogOpen = true;
             unawaited(
@@ -100,6 +108,7 @@ class _DashBoardScreenWidgetState extends State<DashBoardScreenWidget> {
               }(),
             );
 
+            if (!mounted) return;
             context.goNamed(
               LoadingScreenWidget.routeName,
               queryParameters: {
@@ -116,6 +125,7 @@ class _DashBoardScreenWidgetState extends State<DashBoardScreenWidget> {
 
       await actions.watchAuthorisedPins(
         (result) async {
+          if (!mounted) return;
           FFAppState().updateUserStruct(
             (e) => e
               ..permissions = result
@@ -125,6 +135,7 @@ class _DashBoardScreenWidgetState extends State<DashBoardScreenWidget> {
                       ?.permissions ??
                   0,
           );
+          if (!mounted) return;
           safeSetState(() {});
         },
       );
@@ -257,7 +268,8 @@ class _DashBoardScreenWidgetState extends State<DashBoardScreenWidget> {
                                           animation: true,
                                           animateFromLastPercent: true,
                                           progressColor:
-                                              FlutterFlowTheme.of(context).secondary,
+                                              FlutterFlowTheme.of(context)
+                                                  .secondary,
                                           backgroundColor:
                                               FlutterFlowTheme.of(context).info,
                                           barRadius: Radius.circular(50.0),

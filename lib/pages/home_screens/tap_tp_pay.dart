@@ -60,15 +60,15 @@ class _TapToPayState extends State<TapToPay> {
   TapToPayResponseStruct? tapToPayResponse;
 
   Future<void> _initTerminal() async {
-    final permissions = [
-      Permission.locationWhenInUse,
-      Permission.bluetooth,
-      if (Platform.isAndroid) ...[
-        Permission.bluetoothScan,
-        Permission.bluetoothConnect,
-      ],
-    ];
-    await permissions.request();
+    // final permissions = [
+    //   Permission.locationWhenInUse,
+    //   Permission.bluetooth,
+    //   if (Platform.isAndroid) ...[
+    //     Permission.bluetoothScan,
+    //     Permission.bluetoothConnect,
+    //   ],
+    // ];
+    // await permissions.request();
     String? fetchToken = await _makePaymentIntent();
     if (fetchToken != null && !Terminal.isInitialized) {
       await Terminal.initTerminal(

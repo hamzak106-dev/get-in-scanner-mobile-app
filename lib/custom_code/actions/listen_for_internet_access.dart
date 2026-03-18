@@ -1,5 +1,7 @@
 // Automatic FlutterFlow imports
 
+import 'package:flutter/foundation.dart';
+
 import '/flutter_flow/flutter_flow_util.dart';
 // Imports other custom actions
 // Imports custom functions
@@ -50,7 +52,7 @@ Future listenForInternetAccess() async {
   // Listen to connectivity changes
   _connectivitySubscription = connectivity.onConnectivityChanged.listen(
     (List<ConnectivityResult> result) async {
-      debugPrint('\n\nConnectivity changed: $result');
+      if (kDebugMode) debugPrint('\n\nConnectivity changed: $result');
       if (result.contains(ConnectivityResult.mobile) ||
           result.contains(ConnectivityResult.wifi)) {
         // Mobile network available.
@@ -58,22 +60,22 @@ Future listenForInternetAccess() async {
           if (FFAppState().user.userId != 0) {
             if (!FFAppState().isOnline) {
               if (!db.connected) {
-                SupabaseConnector currentConnector = SupabaseConnector(db);
-                db.connect(connector: currentConnector);
-                debugPrint('Synced with PowerSync');
+                // Use central helper instead of direct db.connect to avoid races
+                await tryConnectPowerSync();
+                if (kDebugMode) debugPrint('Synced with PowerSync');
               }
             }
           }
           FFAppState().isOnline = true;
         }
-        debugPrint('\n\isOnline ${FFAppState().isOnline}...');
+        if (kDebugMode) debugPrint('\n\isOnline ${FFAppState().isOnline}...');
         if (result.contains(ConnectivityResult.wifi)) {
-          debugPrint('\n\nNetwork available. Reinitializing multicast...');
+          if (kDebugMode) debugPrint('\n\nNetwork available. Reinitializing multicast...');
           await startMulticast(); // Reinitialize the multicast
         }
       } else {
         FFAppState().isOnline = false;
-        debugPrint('No network available. Closing socket...');
+        if (kDebugMode) debugPrint('No network available. Closing socket...');
         await closeSocket(); // Close the socket when there's no network
       }
     },

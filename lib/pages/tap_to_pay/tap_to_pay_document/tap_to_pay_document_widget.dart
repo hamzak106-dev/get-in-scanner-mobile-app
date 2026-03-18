@@ -106,7 +106,7 @@ class _TapToPayDocumentWidgetState extends State<TapToPayDocumentWidget> {
                                       ),
                                 ),
                                 Text(
-                                  'On iphone',
+                                  'On iPhone',
                                   style: FlutterFlowTheme.of(context)
                                       .bodyMedium
                                       .override(

@@ -143,13 +143,14 @@ class GetInScannerAPIsGroup {
   static SyncWithGetINCall syncWithGetINCall = SyncWithGetINCall();
   static UploadCSVCall uploadCSVCall = UploadCSVCall();
   static CreateStripeTapToPayPaymentCall createStripeTapToPayPaymentCall =
-  CreateStripeTapToPayPaymentCall();
+      CreateStripeTapToPayPaymentCall();
   static CreateEventQuickPayCall createEventQuickPayCall =
-  CreateEventQuickPayCall();
+      CreateEventQuickPayCall();
   static CheckEventQuickPayCall checkEventQuickPayCall =
-  CheckEventQuickPayCall();
-static GetQuickPayTerminalTokenCall getQuickPayTerminalTokenCall =
-GetQuickPayTerminalTokenCall();
+      CheckEventQuickPayCall();
+  static GetQuickPayTerminalTokenCall getQuickPayTerminalTokenCall =
+      GetQuickPayTerminalTokenCall();
+  static TerminalOnboardingCall terminalOnboardingCall = TerminalOnboardingCall();
 
   static final interceptors = [
     ExampleInterceptor(),
@@ -365,7 +366,8 @@ class CheckEventQuickPayCall {
     return FFApiInterceptor.makeApiCall(
       ApiCallOptions(
         callName: 'CheckStripeTapToPayPayment',
-        apiUrl: '${baseUrl}/api/scanner-app/purchase/${eventId}/quick-pay/check',
+        apiUrl:
+            '${baseUrl}/api/scanner-app/purchase/${eventId}/quick-pay/check',
         callType: ApiCallType.POST,
         headers: {
           'Content-Type': 'application/json',
@@ -403,14 +405,16 @@ class GetQuickPayTerminalTokenCall {
     return FFApiInterceptor.makeApiCall(
       ApiCallOptions(
         callName: 'GetQuickPayTerminalToken',
-        apiUrl: '${baseUrl}/api/scanner-app/purchase/${eventId}/quick-pay/terminal-token',
+        apiUrl:
+            '${baseUrl}/api/scanner-app/purchase/${eventId}/quick-pay/terminal-token',
         callType: ApiCallType.POST,
         headers: {
           'Content-Type': 'application/json',
           'scanner-api-key': '${scannerApiKey}',
         },
         params: {},
-        body: null, // No body
+        body: null,
+        // No body
         bodyType: BodyType.JSON,
         returnBody: true,
         encodeBodyUtf8: false,
@@ -424,6 +428,46 @@ class GetQuickPayTerminalTokenCall {
   }
 }
 
+class TerminalOnboardingCall {
+  Future<ApiCallResponse> call({
+    String? apiBaseURL = '',
+    String? scannerApiKey = '',
+    String? eventId = '',
+    String? ScannerName = '',
+  }) async {
+    final baseUrl = GetInScannerAPIsGroup.getBaseUrl(
+      apiBaseURL: apiBaseURL,
+    );
+
+    final body = '''{
+  "scanner_name": "${ScannerName}",
+}''';
+
+    return FFApiInterceptor.makeApiCall(
+      ApiCallOptions(
+        callName: 'GetQuickPayTerminalToken',
+        apiUrl:
+            '${baseUrl}/api/scanner-app/purchase/stripe/createOnboardingLink',
+        callType: ApiCallType.POST,
+        headers: {
+          'Content-Type': 'application/json',
+          'scanner-api-key': '${scannerApiKey}',
+        },
+        params: {},
+        body: body,
+        // No body
+        bodyType: BodyType.JSON,
+        returnBody: true,
+        encodeBodyUtf8: false,
+        decodeUtf8: false,
+        cache: false,
+        isStreamingApi: false,
+        alwaysAllowBody: false,
+      ),
+      GetInScannerAPIsGroup.interceptors,
+    );
+  }
+}
 
 /// End GetIn Scanner APIs Group Code
 

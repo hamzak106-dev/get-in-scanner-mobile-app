@@ -1,20 +1,26 @@
+import 'dart:developer';
+
+import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart';
+import 'package:g_e_t_i_n_scanner/components/card_scanning/card_scanning_widget.dart'
+    show CardScanningWidget;
 import 'package:g_e_t_i_n_scanner/custom_code/actions/index.dart';
-import '../../../custom_code/actions/init_power_sync.dart';
-import '../../no_event_found/no_event_found_widget.dart';
+import 'package:provider/provider.dart';
+
 import '/backend/supabase/supabase.dart';
 import '/components/event_card/event_card_widget.dart';
 import '/components/sync/sync_widget.dart';
-import '/flutter_flow/flutter_flow_theme.dart';
-import '/flutter_flow/flutter_flow_util.dart';
-import '/shimmer/shimmer_event_card/shimmer_event_card_widget.dart';
 import '/custom_code/actions/index.dart' as actions;
 import '/flutter_flow/custom_functions.dart' as functions;
+import '/flutter_flow/flutter_flow_theme.dart';
+import '/flutter_flow/flutter_flow_util.dart';
 import '/flutter_flow/random_data_util.dart' as random_data;
 import '/index.dart';
-import 'package:flutter/material.dart';
-import 'package:flutter/scheduler.dart';
-import 'package:provider/provider.dart';
+import '/shimmer/shimmer_event_card/shimmer_event_card_widget.dart';
+import '../../../custom_code/actions/init_power_sync.dart';
+import '../../no_event_found/no_event_found_widget.dart';
 import 'admin_dashboard_model.dart';
+
 export 'admin_dashboard_model.dart';
 
 class AdminDashboardWidget extends StatefulWidget {
@@ -55,6 +61,23 @@ class _AdminDashboardWidgetState extends State<AdminDashboardWidget> {
           safeSetState(() {});
         },
       );
+      if (isiOS && !FFAppState().tapToPayTutorialDone) {
+        actions.getPosEventId().then((posEventId) async {
+          if (posEventId == null) return;
+          log(posEventId.toString());
+          await context.pushNamed(TapToPayDocumentWidget.routeName);
+          await showModalBottomSheet(
+              context: context,
+              isScrollControlled: true,
+              builder: (context) {
+                return CardScanningWidget(eventId: posEventId);
+              });
+          FFAppState().tapToPayTutorialDone = true;
+          FFAppState().update(() {});
+        }).catchError((e) {
+          log(e.toString());
+        });
+      }
     });
   }
 
@@ -123,8 +146,8 @@ class _AdminDashboardWidgetState extends State<AdminDashboardWidget> {
                     ),
                     alignment: AlignmentDirectional(-1.0, 0.0),
                     child: Padding(
-                      padding:  EdgeInsetsDirectional.fromSTEB(
-                          20.0, 0.0, 20.0, 0.0),
+                      padding:
+                          EdgeInsetsDirectional.fromSTEB(20.0, 0.0, 20.0, 0.0),
                       child: Text(
                         'Events',
                         style: FlutterFlowTheme.of(context).bodyMedium.override(

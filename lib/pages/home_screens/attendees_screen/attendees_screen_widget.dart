@@ -859,11 +859,7 @@ class _AttendeesScreenWidgetState extends State<AttendeesScreenWidget> {
                                     }
                                   }()
                                       .toList();
-                                  if (attendee.isEmpty) {
-                                    return Center(
-                                      child: NoAttendeesViewWidget(),
-                                    );
-                                  }
+
 
                                   return ListView.builder(
                                     padding: EdgeInsets.zero,

@@ -15,14 +15,20 @@ RawDatagramSocket? socket;
 const platform = MethodChannel('xyz.getin.scanner/channel');
 String? _localIP;
 dynamic lastReadData;
+bool _isInitializing = false;
 
 Future startMulticast() async {
+  if (_isInitializing) {
+    debugPrint('Multicast initialization already in progress...');
+    return;
+  }
+  _isInitializing = true;
   try {
     // Ensure any existing socket is closed before initializing
     await closeSocket();
 
     // Initialize socket for both Android and iOS
-    socket ??= await _initializeSocket(
+    socket = await _initializeSocket(
       FFAppState().multicastAddress,
       FFAppState().multicastPort,
     );
@@ -38,7 +44,10 @@ Future startMulticast() async {
         'Multicast initialized on ${FFAppState().multicastAddress}:${FFAppState().multicastPort}');
   } catch (e) {
     debugPrint('Error starting multicast: $e');
+    socket = null;
     rethrow;
+  } finally {
+    _isInitializing = false;
   }
 }
 
@@ -57,11 +66,12 @@ Future<RawDatagramSocket> _initializeSocket(
   _localIP = await info.getWifiIP();
 
   // Create and bind socket
+  // Using reusePort: true to avoid "Address already in use" errors during rapid re-initialization
   final socket = await RawDatagramSocket.bind(
     InternetAddress.anyIPv4,
     port,
     reuseAddress: true,
-    reusePort: false,
+    reusePort: true,
     ttl: 5,
   );
 
@@ -80,7 +90,6 @@ Future<RawDatagramSocket> _initializeSocket(
 
   // Configure socket
   socket.broadcastEnabled = true;
-  socket.writeEventsEnabled = true;
   socket.writeEventsEnabled = true;
   socket.multicastHops = 10;
 

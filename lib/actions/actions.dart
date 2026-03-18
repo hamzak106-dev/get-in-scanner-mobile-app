@@ -45,7 +45,7 @@ Future producerSelectionBlock(BuildContext context) async {
   await showModalBottomSheet(
     isScrollControlled: true,
     backgroundColor: FlutterFlowTheme.of(context).primaryBackground,
-    enableDrag: false,
+    enableDrag: true,
     useSafeArea: true,
     context: context,
     builder: (context) {

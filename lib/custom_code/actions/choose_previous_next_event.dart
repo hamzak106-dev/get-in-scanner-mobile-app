@@ -14,29 +14,54 @@ Future<List<EventsRow>> choosePreviousNextEvent(bool isNext, bool isUpcoming) as
   // Add your function code here!
 
   var pinId = FFAppState().user.pinId;
-  var pinData = await db.get('SELECT * FROM pin WHERE uid = $pinId');
-  PinRow pin = PinRow(pinData);
-  List<EventsRow> allEvents = [];
-  var hasAllEvent = getAccessPermissionAllow(pin.permissions, AccessPermission.allEvents, FFAppState().user.profile);
+  PinRow? pin;
+  if (pinId > 0) {
+    try {
+      var pinData = await db.get('SELECT * FROM pin WHERE uid = $pinId');
+      pin = PinRow(pinData);
+    } catch (e) {
+      print('choosePreviousNextEvent: could not load pin uid=$pinId: $e');
+      pin = null;
+    }
+  }
 
-  String getEventQuery;
-  if (hasAllEvent || pin.type == 'SYSTEM') {
+  List<EventsRow> allEvents = [];
+  var hasAllEvent = false;
+  if (pin != null) {
+    hasAllEvent = getAccessPermissionAllow(pin.permissions, AccessPermission.allEvents, FFAppState().user.profile);
+  }
+
+  String getEventQuery = '';
+  if (hasAllEvent || pin?.type == 'SYSTEM') {
     getEventQuery = 'SELECT * FROM events WHERE creator_user = ${FFAppState().user.userId} ORDER BY start_date ASC';
-  } else {
-    var eventIds = (await db.getAll(
-            'SELECT DISTINCT event_id FROM attendee WHERE event_id IN(${pin.eventIds}) OR ticket_id IN(${pin.ticketIds})'))
-        .map((json) => json.values[json.keys.indexOf('event_id')])
-        .toList();
-    getEventQuery =
-        'SELECT * FROM events WHERE creator_user = ${FFAppState().user.userId} AND event_id IN (${eventIds.join(', ')}) ORDER BY start_date ASC';
+  } else if (pin != null) {
+    List<dynamic> eventIds = [];
+    try {
+      eventIds = (await db.getAll(
+              'SELECT DISTINCT event_id FROM attendee WHERE event_id IN(${pin.eventIds}) OR ticket_id IN(${pin.ticketIds})'))
+          .map((json) => json.values[json.keys.indexOf('event_id')])
+          .toList();
+    } catch (e) {
+      print('choosePreviousNextEvent: db.getAll failed: $e');
+      eventIds = [];
+    }
+
+    if (eventIds.isNotEmpty) {
+      getEventQuery =
+          'SELECT * FROM events WHERE creator_user = ${FFAppState().user.userId} AND event_id IN (${eventIds.join(', ')}) ORDER BY start_date ASC';
+    } else {
+      getEventQuery = '';
+    }
   }
 
   if (getEventQuery.isNotEmpty) {
-    await db.getAll(getEventQuery).then(
-      (events) {
-        allEvents = events.map((json) => EventsRow(Map<String, dynamic>.from(json))).toList();
-      },
-    );
+    try {
+      var events = await db.getAll(getEventQuery);
+      allEvents = events.map((json) => EventsRow(Map<String, dynamic>.from(json))).toList();
+    } catch (e) {
+      print('choosePreviousNextEvent: failed to load events: $e');
+      allEvents = [];
+    }
   }
 
   allEvents = allEvents
@@ -44,7 +69,12 @@ Future<List<EventsRow>> choosePreviousNextEvent(bool isNext, bool isUpcoming) as
           ? (e.endDate.secondsSinceEpoch >= getCurrentTimestamp.secondsSinceEpoch)
           : (e.endDate.secondsSinceEpoch < getCurrentTimestamp.secondsSinceEpoch))
       .toList();
-  var selectedEvent = parseEventRow(FFAppState().selectedEvent).first;
+
+  var selectedEvents = parseEventRow(FFAppState().selectedEvent);
+  if (selectedEvents.isEmpty) {
+    throw Exception('Selected event not available');
+  }
+  var selectedEvent = selectedEvents.first;
   var indexOf = allEvents.indexWhere((e) => e.uid == selectedEvent.uid);
 
   if (indexOf == -1) {

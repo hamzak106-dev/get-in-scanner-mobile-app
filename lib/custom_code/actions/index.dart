@@ -73,8 +73,12 @@ export 'resolve_profile_image.dart' show resolveProfileImage;
 export 'get_event_by_event_id.dart' show getEventByEventId;
 export 'get_pos_event_id.dart' show getPosEventId;
 export 'disable_tap_to_pay.dart' show disableTapToPay;
+export 'enable_tap_to_pay.dart' show enableTapToPay;
 export 'keyboard_foucusnode.dart'show NoKeyboardFocusNode;
 export 'shorebird_update_check.dart'show checkForUpdates;
 export 'request_camera_permission.dart' show requestCameraPermission;
+export 'quick_pay_permissions.dart' show configureTerminalPermissions;
+export 'requestion_location_permission.dart' show requestLocationPermission, requestLocationPermissionStatus;
+
 // export 'get_attendee_add_ons.dart' show getAttendeeAddOns;
 // export 'add_attendee_add_on.dart' show addAttendeeAddOn;

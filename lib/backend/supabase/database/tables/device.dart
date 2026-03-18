@@ -74,7 +74,15 @@ class DeviceRow extends SupabaseDataRow {
 
   set defragAt(DateTime? value) => setField<DateTime>('defrag_at', value);
 
-  bool get tapToPayEnabled => getField<bool>('tap_to_pay_enabled') ?? false;
+  bool get tapToPayEnabled {
+    final value = getField<dynamic>('tap_to_pay_enabled');
+    if (value is bool) {
+      return value;
+    } else if (value is int) {
+      return value == 1;
+    }
+    return false;
+  }
 
   set tapToPayEnabled(bool value) =>
       setField<bool>('tap_to_pay_enabled', value);

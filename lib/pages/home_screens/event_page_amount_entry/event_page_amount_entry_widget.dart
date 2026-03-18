@@ -37,7 +37,7 @@ class _EventPageAmountEntryWidgetState
     SchedulerBinding.instance.addPostFrameCallback((_) async {
       _model.event = await actions.getEventByEventId(widget.eventId);
       safeSetState(() {});
-      await actions.QuickPay().initTerminal(widget.eventId);
+      // await actions.QuickPay().initTerminal(widget.eventId, );
     });
 
     logFirebaseEvent('screen_view',

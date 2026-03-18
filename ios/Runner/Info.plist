@@ -95,17 +95,24 @@
 	<false/>
 	<key>com.apple.developer.networking.multicast</key>
 	<true/>
+
+    <key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+    <string>Your location is required to support Tap to Pay while the app is running or in the background.</string>
+
+    <key>NSLocationAlwaysUsageDescription</key>
+    <string>This app uses location to enable secure Tap to Pay.</string>
+
 	<key>NSLocationWhenInUseUsageDescription</key>
-    <string>Location access is required in order to accept payments.</string>
-    <key>NSBluetoothPeripheralUsageDescription</key>
-    <string>Bluetooth access is required in order to connect to supported bluetooth card readers.</string>
-    <key>NSBluetoothAlwaysUsageDescription</key>
-    <string>This app uses Bluetooth to connect to supported card readers.</string>
-    <key>UIBackgroundModes</key>
-    <array>
-    	<string>bluetooth-central</string>
-    </array>
-    <key>ITSAppUsesNonExemptEncryption</key>
+       <string>We need your location to enable Tap to Pay on iPhone.</string>
+       <key>NSBluetoothPeripheralUsageDescription</key>
+       <string>Bluetooth access is required in order to connect to supported bluetooth card readers.</string>
+       <key>NSBluetoothAlwaysUsageDescription</key>
+       <string>We need Bluetooth access to connect to nearby devices for Tap to Pay on iPhone.</string>
+       <key>UIBackgroundModes</key>
+       <array>
+        <string>bluetooth-central</string>
+       </array>
+	<key>ITSAppUsesNonExemptEncryption</key>
     <false/>
 </dict>
 </plist>

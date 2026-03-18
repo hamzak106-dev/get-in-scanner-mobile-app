@@ -13,7 +13,7 @@ Future initializeFirebaseRemoteConfig() async {
         'GetInBaseUrl': 'https://api.getin-nextgen.com',
         'ImageBaseUrl': 'https://static.getin-nextgen.com',
         'powerSyncUrl':
-            'https://673ad860ea6f3c0961fddcad.powersync.journeyapps.com',
+        'https://673ad860ea6f3c0961fddcad.powersync.journeyapps.com',
         'sbEmail': 'qc@get-in.com',
         'sbPassword': 'Getin12*',
         'ScannerApiBaseUrl': 'https://scanner.getin-nextgen.com/api/v1/events',

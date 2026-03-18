@@ -61,6 +61,7 @@ class SettingScreenModel extends FlutterFlowModel<SettingScreenWidget> {
   // Model for SettingTile component.
   late SettingTileModel settingTileModel13;
   late SettingTileModel settingTileModel14;
+  late SettingTileModel debugTokenModel;
 
   // Models for SettingTile dynamic component.
   late FlutterFlowDynamicModels<SettingTileModel> settingTileModels12;
@@ -80,7 +81,8 @@ class SettingScreenModel extends FlutterFlowModel<SettingScreenWidget> {
     settingTileModel9 = createModel(context, () => SettingTileModel());
     settingTileModel10 = createModel(context, () => SettingTileModel());
     settingTileModel13 = createModel(context, () => SettingTileModel());
-    settingTileModel14=createModel(context, () => SettingTileModel());
+    settingTileModel14 = createModel(context, () => SettingTileModel());
+    debugTokenModel = createModel(context, () => SettingTileModel());
     settingTileModels12 = FlutterFlowDynamicModels(() => SettingTileModel());
   }
 
@@ -99,5 +101,6 @@ class SettingScreenModel extends FlutterFlowModel<SettingScreenWidget> {
     settingTileModels12.dispose();
     settingTileModel13.dispose();
     settingTileModel14.dispose();
+    debugTokenModel.dispose();
   }
 }

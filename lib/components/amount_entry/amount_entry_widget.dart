@@ -32,18 +32,18 @@ class _AmountEntryWidgetState extends State<AmountEntryWidget> {
 
     QuickPay().initTerminal(int.parse(widget.eventId), onInitialized: () {
       setState(() => isInitialized = true);
-    }).catchError((error) {
+    }, onError: (err) {
       context.pushNamed(FeatureDisabledPage.routeName, pathParameters: {
-        'message': '$error',
+        'message': '$err',
       });
-      widget.onContinue?.call();
     });
   }
 
   String? userText;
 
   void addNumber(String value) {
-    if ((userText == null || userText!.isEmpty) && (value == '0' || value == '.')) {
+    if ((userText == null || userText!.isEmpty) &&
+        (value == '0' || value == '.')) {
       return;
     }
 
@@ -60,15 +60,13 @@ class _AmountEntryWidgetState extends State<AmountEntryWidget> {
       return;
     }
 
-
     userText = newText;
     manageController();
     _focusNode.requestFocus();
     if (errorMessage != null) {
       errorMessage = null;
     }
-      setState(() {});
-
+    setState(() {});
   }
 
   void manageController() {
@@ -122,22 +120,19 @@ class _AmountEntryWidgetState extends State<AmountEntryWidget> {
     return double.tryParse(t) ?? 0.0;
   }
 
-  void _handleContinue() async {
+  Future<void> _handleContinue() async {
     final amount = _parsedAmount();
     if (amount < 1) {
       setState(() => errorMessage = "Please enter an amount greater than 1");
       return;
     }
 
-
-    context.pushNamed(ChekoutWidget.routeName);
-
     await QuickPay().start(
       amount: amount.toString(),
       eventId: widget.eventId.toString(),
       onSuccess: () {
-        context.safePop();
-        context.pushNamed(
+        // appNavigatorKey.currentContext?.safePop();
+        appNavigatorKey.currentContext?.pushNamed(
           EventPagePurchaserDetailsWidget.routeName,
           pathParameters: {
             'event_id': serializeParam(widget.eventId, ParamType.int)!,
@@ -148,14 +143,15 @@ class _AmountEntryWidgetState extends State<AmountEntryWidget> {
         widget.onContinue?.call();
       },
       onError: (msg) {
-        context.safePop();
-        context.pushNamed(FeatureDisabledPage.routeName, pathParameters: {
+        // appNavigatorKey.currentContext?.safePop();
+        appNavigatorKey.currentContext
+            ?.pushNamed(FeatureDisabledPage.routeName, pathParameters: {
           'message': '$msg',
         });
         widget.onContinue?.call();
       },
       onCancel: () {
-        context.safePop();
+        // appNavigatorKey.currentContext?.safePop();
         widget.onContinue?.call();
       },
     );
@@ -164,164 +160,178 @@ class _AmountEntryWidgetState extends State<AmountEntryWidget> {
   @override
   Widget build(BuildContext context) {
     final amount = _parsedAmount();
+    print("isInitialized ::: $isInitialized");
 
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+    return Stack(
+      alignment: Alignment.center,
       children: [
-        Padding(
-          padding: const EdgeInsets.symmetric(vertical: 10.0),
-          child: Column(
-            children: [
-              Align(
-                alignment: Alignment.center,
-                child: IntrinsicWidth(
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    // textBaseline: TextBaseline.ideographic,
-                    children: [
-                      const Text(
-                        "\$",
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 30,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                      const SizedBox(width: 6),
-                      Flexible(
-                        child: GestureDetector(
-                          onTapDown: (details) {
-                            final box =
-                                context.findRenderObject() as RenderBox?;
-                            if (box != null) {
-                              final local =
-                                  box.globalToLocal(details.globalPosition);
-                              final position = _controller.text.length;
-                              _controller.selection =
-                                  TextSelection.fromPosition(
-                                TextPosition(offset: position),
-                              );
-                            }
-                            FocusScope.of(context).requestFocus(_focusNode);
-                          },
-                          child: AbsorbPointer(
-                            absorbing: false,
-                            child: TextField(
-                              controller: _controller,
-                              focusNode: _focusNode,
-                              readOnly: true,
-                              showCursor: true,
-                              enableInteractiveSelection: true,
-                              textAlign: TextAlign.left,
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 45,
-                                fontWeight: FontWeight.bold,
-                                height: 1,
-                              ),
-                              cursorColor: Colors.white,
-                              decoration: InputDecoration(
-                                hintText: "0.00",
-                                hintStyle: TextStyle(
-                                  color: Colors.white.withValues(alpha: .8),
-                                  fontSize: 45,
-                                  fontWeight: FontWeight.bold,
+        Column(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 10.0),
+              child: Column(
+                children: [
+                  Align(
+                    alignment: Alignment.center,
+                    child: IntrinsicWidth(
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        // textBaseline: TextBaseline.ideographic,
+                        children: [
+                          const Text(
+                            "\$",
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 30,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          const SizedBox(width: 6),
+                          Flexible(
+                            child: GestureDetector(
+                              onTapDown: (details) {
+                                final box =
+                                    context.findRenderObject() as RenderBox?;
+                                if (box != null) {
+                                  final local =
+                                      box.globalToLocal(details.globalPosition);
+                                  final position = _controller.text.length;
+                                  _controller.selection =
+                                      TextSelection.fromPosition(
+                                    TextPosition(offset: position),
+                                  );
+                                }
+                                FocusScope.of(context).requestFocus(_focusNode);
+                              },
+                              child: AbsorbPointer(
+                                absorbing: false,
+                                child: TextField(
+                                  controller: _controller,
+                                  focusNode: _focusNode,
+                                  readOnly: true,
+                                  showCursor: true,
+                                  enableInteractiveSelection: true,
+                                  textAlign: TextAlign.left,
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 45,
+                                    fontWeight: FontWeight.bold,
+                                    height: 1,
+                                  ),
+                                  cursorColor: Colors.white,
+                                  decoration: InputDecoration(
+                                    hintText: "0.00",
+                                    hintStyle: TextStyle(
+                                      color: Colors.white.withValues(alpha: .8),
+                                      fontSize: 45,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                    border: InputBorder.none,
+                                    isCollapsed: true,
+                                    contentPadding: EdgeInsets.zero,
+                                  ),
                                 ),
-                                border: InputBorder.none,
-                                isCollapsed: true,
-                                contentPadding: EdgeInsets.zero,
                               ),
                             ),
                           ),
-                        ),
+                        ],
                       ),
-                    ],
+                    ),
                   ),
-                ),
+                  if (errorMessage != null)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 2.0),
+                      child: Text(
+                        errorMessage!,
+                        style: const TextStyle(color: Colors.red, fontSize: 12),
+                      ),
+                    ),
+                ],
               ),
-              if (errorMessage != null)
-                Padding(
-                  padding: const EdgeInsets.only(top: 2.0),
-                  child: Text(
-                    errorMessage!,
-                    style: const TextStyle(color: Colors.red, fontSize: 12),
-                  ),
-                ),
-            ],
-          ),
-        ),
-
-        const SizedBox(height: 10),
-
-        // Custom Keypad
-        Expanded(
-          child: GridView.builder(
-            physics: const NeverScrollableScrollPhysics(),
-            shrinkWrap: true,
-            padding: const EdgeInsets.symmetric(horizontal: 20),
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 3,
-              childAspectRatio: 1.8,
-              mainAxisSpacing: 12,
             ),
-            itemCount: 12,
-            itemBuilder: (context, index) {
-              if (index == 9) {
-                return TextButton(
-                  onPressed: () => addNumber("."),
-                  child: const Text(".",
-                      style: TextStyle(color: Colors.white, fontSize: 28)),
-                );
-              } else if (index == 11) {
-                return IconButton(
-                  onPressed: _backspace,
-                  icon: SvgPicture.asset(
-                    'assets/svg/keyboard_back_icon.svg',
-                    color: Colors.white,
-                    width: 24,
-                    height: 24,
-                  ),
-                );
-              } else {
-                int digit = (index == 10) ? 0 : index + 1;
-                return TextButton(
-                  onPressed: () => addNumber(digit.toString()),
-                  child: Text("$digit",
-                      style:
-                          const TextStyle(color: Colors.white, fontSize: 28)),
-                );
-              }
-            },
-          ),
-        ),
 
-        Row(
-          children: [
+            const SizedBox(height: 10),
+
+            // Custom Keypad
             Expanded(
-              child: FFButtonWidget(
-                text: 'CONTINUE',
-                onPressed: _handleContinue,
-                showLoadingIndicator: false,
-                options: FFButtonOptions(
-                  height: 40.0,
-                  color: amount >= 1 ? Colors.white : Colors.black,
-                  textStyle: FlutterFlowTheme.of(context).titleSmall.override(
-                        fontFamily: 'Mona Sans',
-                        color: amount >= 1
-                            ? FlutterFlowTheme.of(context).primaryBackground
-                            : FlutterFlowTheme.of(context).primaryText,
-                        fontSize: 18.0,
-                        fontWeight: FontWeight.w800,
-                      ),
-                  elevation: 0.0,
+              child: GridView.builder(
+                physics: const NeverScrollableScrollPhysics(),
+                shrinkWrap: true,
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 3,
+                  childAspectRatio: 1.8,
+                  mainAxisSpacing: 12,
                 ),
+                itemCount: 12,
+                itemBuilder: (context, index) {
+                  if (index == 9) {
+                    return TextButton(
+                      onPressed: () => addNumber("."),
+                      child: const Text(".",
+                          style: TextStyle(color: Colors.white, fontSize: 28)),
+                    );
+                  } else if (index == 11) {
+                    return IconButton(
+                      onPressed: _backspace,
+                      icon: SvgPicture.asset(
+                        'assets/svg/keyboard_back_icon.svg',
+                        color: Colors.white,
+                        width: 24,
+                        height: 24,
+                      ),
+                    );
+                  } else {
+                    int digit = (index == 10) ? 0 : index + 1;
+                    return TextButton(
+                      onPressed: () => addNumber(digit.toString()),
+                      child: Text("$digit",
+                          style: const TextStyle(
+                              color: Colors.white, fontSize: 28)),
+                    );
+                  }
+                },
               ),
             ),
+
+            Row(
+              children: [
+                Expanded(
+                  child: FFButtonWidget(
+                    text: isiOS ? "Tap to Pay on iPhone" : "CONTINUE",
+                    onPressed: (amount >= 1 && isInitialized)
+                        ? () async => await _handleContinue()
+                        : null,
+                    showLoadingIndicator: true,
+                    options: FFButtonOptions(
+                      height: 40.0,
+                      color: amount >= 1 ? Colors.white : Colors.black,
+                      textStyle: FlutterFlowTheme.of(context)
+                          .titleSmall
+                          .override(
+                            fontFamily: 'Mona Sans',
+                            color: amount >= 1
+                                ? FlutterFlowTheme.of(context).primaryBackground
+                                : FlutterFlowTheme.of(context).primaryText,
+                            fontSize: 18.0,
+                            fontWeight: FontWeight.w800,
+                          ),
+                      elevation: 0.0,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+
+            const SizedBox(height: 30),
           ],
         ),
-
-        const SizedBox(height: 20),
+        if (!isInitialized)
+          CircularProgressIndicator(
+            color: Colors.white,
+          )
       ],
     );
   }

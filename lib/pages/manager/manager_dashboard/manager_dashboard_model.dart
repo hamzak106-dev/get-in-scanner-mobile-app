@@ -10,6 +10,7 @@ import 'package:flutter/material.dart';
 class ManagerDashboardModel extends FlutterFlowModel<ManagerDashboardWidget> {
   ///  Local state fields for this component.
 
+  bool isLoading = true;
   List<EventsRow> events = [];
   void addToEvents(EventsRow item) => events.add(item);
   void removeFromEvents(EventsRow item) => events.remove(item);

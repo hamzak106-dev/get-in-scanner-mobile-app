@@ -123,14 +123,19 @@ class _SplashSettingWidgetState extends State<SplashSettingWidget> {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Text(
-                            'Instantly jump into the app without waiting.\n'
-                                'Enable this option to bypass the splash\n'
-                                'screen and get straight to what you need.',
-                            style: FlutterFlowTheme.of(context).bodySmall.override(
-                              fontFamily: 'Mona Sans',
-                              fontSize: 14,
-                              color: FlutterFlowTheme.of(context).secondaryGrey,
+                          // Make the explanatory text flexible so it can wrap and not cause overflow
+                          Expanded(
+                            child: Text(
+                              'Instantly jump into the app without waiting.\n'
+                                  'Enable this option to bypass the splash\n'
+                                  'screen and get straight to what you need.',
+                              softWrap: true,
+                              overflow: TextOverflow.visible,
+                              style: FlutterFlowTheme.of(context).bodySmall.override(
+                                fontFamily: 'Mona Sans',
+                                fontSize: 14,
+                                color: FlutterFlowTheme.of(context).secondaryGrey,
+                              ),
                             ),
                           ),
                           SizedBox(

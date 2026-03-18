@@ -1,26 +1,32 @@
+import 'dart:ui';
+
+import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart';
+import 'package:g_e_t_i_n_scanner/custom_code/actions/init_power_sync.dart';
+import 'package:provider/provider.dart';
+
 import '/backend/schema/enums/enums.dart';
 import '/backend/supabase/supabase.dart';
 import '/components/event_card_for_pin/event_card_for_pin_widget.dart';
 import '/components/rive_animation_view/rive_animation_view_widget.dart';
 import '/components/search_text_field/search_text_field_widget.dart';
-import '/flutter_flow/flutter_flow_util.dart';
-import 'dart:ui';
 import '/custom_code/actions/index.dart' as actions;
 import '/flutter_flow/custom_functions.dart' as functions;
-import 'package:flutter/material.dart';
-import 'package:flutter/scheduler.dart';
-import 'package:provider/provider.dart';
+import '/flutter_flow/flutter_flow_util.dart';
 import 'pin_event_selection_bottom_sheet_model.dart';
+
 export 'pin_event_selection_bottom_sheet_model.dart';
 
 class PinEventSelectionBottomSheetWidget extends StatefulWidget {
   const PinEventSelectionBottomSheetWidget({super.key});
 
   @override
-  State<PinEventSelectionBottomSheetWidget> createState() => _PinEventSelectionBottomSheetWidgetState();
+  State<PinEventSelectionBottomSheetWidget> createState() =>
+      _PinEventSelectionBottomSheetWidgetState();
 }
 
-class _PinEventSelectionBottomSheetWidgetState extends State<PinEventSelectionBottomSheetWidget> {
+class _PinEventSelectionBottomSheetWidgetState
+    extends State<PinEventSelectionBottomSheetWidget> {
   late PinEventSelectionBottomSheetModel _model;
 
   @override
@@ -37,14 +43,11 @@ class _PinEventSelectionBottomSheetWidgetState extends State<PinEventSelectionBo
     // On component load action.
     SchedulerBinding.instance.addPostFrameCallback((_) async {
       logFirebaseEvent('PIN_EVENT_SELECTION_BOTTOM_SHEET_PinEven');
-      _model.userEvents = await EventsTable().queryRows(
-        queryFn: (q) => q
-            .eqOrNull(
-              'creator_user',
-              FFAppState().user.userId,
-            )
-            .gt('end_date', DateTime.now()),
-      );
+      _model.userEvents = await db
+          .getAll(
+            "SELECT * FROM events WHERE creator_user = ${FFAppState().user.userId} AND date(end_date) >= date('now') ;",
+          ).then((rows) => rows.map((row) => EventsRow(row)).toList());
+
       _model.events = _model.userEvents!.toList().cast<EventsRow>();
       safeSetState(() {});
     });
@@ -111,7 +114,8 @@ class _PinEventSelectionBottomSheetWidgetState extends State<PinEventSelectionBo
                     child: SearchTextFieldWidget(
                       isLight: true,
                       onChange: () async {
-                        logFirebaseEvent('PIN_EVENT_SELECTION_BOTTOM_SHEET_Contain');
+                        logFirebaseEvent(
+                            'PIN_EVENT_SELECTION_BOTTOM_SHEET_Contain');
 
                         safeSetState(() {});
                       },
@@ -125,7 +129,9 @@ class _PinEventSelectionBottomSheetWidgetState extends State<PinEventSelectionBo
                             builder: (context) {
                               final event = functions
                                   .filterEventList(
-                                      _model.events.toList(), _model.searchTextFieldModel.textController.text)
+                                      _model.events.toList(),
+                                      _model.searchTextFieldModel.textController
+                                          .text)
                                   .toList();
 
                               return ListView.separated(
@@ -133,11 +139,13 @@ class _PinEventSelectionBottomSheetWidgetState extends State<PinEventSelectionBo
                                 shrinkWrap: true,
                                 scrollDirection: Axis.vertical,
                                 itemCount: event.length,
-                                separatorBuilder: (_, __) => SizedBox(height: 16.0),
+                                separatorBuilder: (_, __) =>
+                                    SizedBox(height: 16.0),
                                 itemBuilder: (context, eventIndex) {
                                   final eventItem = event[eventIndex];
                                   return wrapWithModel(
-                                    model: _model.eventCardForPinModels.getModel(
+                                    model:
+                                        _model.eventCardForPinModels.getModel(
                                       eventItem.eventId.toString(),
                                       eventIndex,
                                     ),
@@ -148,7 +156,8 @@ class _PinEventSelectionBottomSheetWidgetState extends State<PinEventSelectionBo
                                       ),
                                       event: eventItem,
                                       onTap: () async {
-                                        logFirebaseEvent('PIN_EVENT_SELECTION_BOTTOM_SHEET_Contain');
+                                        logFirebaseEvent(
+                                            'PIN_EVENT_SELECTION_BOTTOM_SHEET_Contain');
                                         Navigator.pop(context, eventItem);
                                       },
                                     ),

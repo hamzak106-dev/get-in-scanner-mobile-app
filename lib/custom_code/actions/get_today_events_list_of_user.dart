@@ -19,9 +19,10 @@ Future<List<EventsRow>?> getTodayEventsListOfUser() async {
   final query = """
 SELECT *
 FROM events
-WHERE creator_user = ${FFAppState().user.userId}
-AND date(end_date) >= date('now') ${isPOSAvailable == true ? 'AND is_available_pos = 1' : ''};
+WHERE
+date(end_date) >= date('now') ${isPOSAvailable == true ? 'AND is_available_pos = 1' : ''};
   """;
+// WHERE creator_user = ${FFAppState().user.userId} AND
   return db.getAll(query).then((data) {
     return data
         .map((json) => EventsRow(Map<String, dynamic>.from(json)))

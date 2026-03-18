@@ -1,13 +1,20 @@
 import 'dart:ui';
+
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:g_e_t_i_n_scanner/components/alert_modelsheet/disable_alert_sheet.dart';
 import 'package:g_e_t_i_n_scanner/components/card_scanning/card_scanning_widget.dart'
     show CardScanningWidget;
 import 'package:g_e_t_i_n_scanner/components/setting/splash_setting_widget.dart';
 import 'package:g_e_t_i_n_scanner/components/setting_tile/setting_tile_widget_2.dart';
 import 'package:provider/provider.dart';
+import 'package:share_plus/share_plus.dart';
+
+import '../../../config/app_config.dart';
 import '/actions/actions.dart' as action_blocks;
 import '/backend/schema/enums/enums.dart';
 import '/backend/supabase/supabase.dart';
@@ -21,6 +28,7 @@ import '/flutter_flow/flutter_flow_util.dart';
 import '/index.dart';
 import '../../../custom_code/actions/init_power_sync.dart';
 import 'setting_screen_model.dart';
+
 export 'setting_screen_model.dart';
 
 class SettingScreenWidget extends StatefulWidget {
@@ -57,9 +65,9 @@ class _SettingScreenWidgetState extends State<SettingScreenWidget>
       _model.userResponse = await actions.fetchUser();
       if (_model.userResponse != null) {
         FFAppState().updateUserStruct(
-              (e) => e
+          (e) => e
             ..updateUser(
-                  (e) => e
+              (e) => e
                 ..firstName = (String name) {
                   return name.split(" ").first;
                 }(_model.userResponse!.name!)
@@ -99,14 +107,14 @@ class _SettingScreenWidgetState extends State<SettingScreenWidget>
     _model.devices = [];
     safeSetState(() {});
     await actions.watchAuthorisedPins(
-          (result) async {
+      (result) async {
         _model.pinResponse = await actions.getPinList(
           result?.toList(),
         );
         _model.pinData = _model.pinResponse!.toList().cast<PinRow>();
         safeSetState(() {});
         await actions.watchDeviceLists(
-              (result) async {
+          (result) async {
             _model.deviceResponse = await actions.getDeviceList(
               result?.toList(),
             );
@@ -151,8 +159,10 @@ class _SettingScreenWidgetState extends State<SettingScreenWidget>
                     shape: BoxShape.circle,
                     gradient: RadialGradient(
                       colors: [
-                        Color(0xFFFF4C00).withOpacity(0.8), // #FF4C00 with 0.8 opacity
-                        Color(0xFFFF281B).withOpacity(0.0), // #FF281B fully transparent
+                        Color(0xFFFF4C00).withOpacity(0.8),
+                        // #FF4C00 with 0.8 opacity
+                        Color(0xFFFF281B).withOpacity(0.0),
+                        // #FF281B fully transparent
                       ],
                       radius: 0.8,
                     ),
@@ -160,7 +170,6 @@ class _SettingScreenWidgetState extends State<SettingScreenWidget>
                 ),
               ),
             ),
-        
             Padding(
               padding: EdgeInsets.all(20.0),
               child: Column(
@@ -169,11 +178,11 @@ class _SettingScreenWidgetState extends State<SettingScreenWidget>
                   Text(
                     'Settings',
                     style: FlutterFlowTheme.of(context).titleLarge.override(
-                      fontFamily: 'MonaSans',
-                      fontSize: 22.0,
-                      letterSpacing: 0.0,
-                      fontWeight: FontWeight.bold,
-                    ),
+                          fontFamily: 'MonaSans',
+                          fontSize: 22.0,
+                          letterSpacing: 0.0,
+                          fontWeight: FontWeight.bold,
+                        ),
                   ),
                   Flexible(
                     child: SingleChildScrollView(
@@ -194,9 +203,9 @@ class _SettingScreenWidgetState extends State<SettingScreenWidget>
                                     style: FlutterFlowTheme.of(context)
                                         .titleSmall
                                         .override(
-                                      fontFamily: 'MonaSans',
-                                      letterSpacing: 0.0,
-                                    ),
+                                          fontFamily: 'MonaSans',
+                                          letterSpacing: 0.0,
+                                        ),
                                   ),
                                 ),
                                 wrapWithModel(
@@ -259,9 +268,9 @@ class _SettingScreenWidgetState extends State<SettingScreenWidget>
                                   style: FlutterFlowTheme.of(context)
                                       .titleSmall
                                       .override(
-                                    fontFamily: 'MonaSans',
-                                    letterSpacing: 0.0,
-                                  ),
+                                        fontFamily: 'MonaSans',
+                                        letterSpacing: 0.0,
+                                      ),
                                 ),
                               ),
                               Column(
@@ -289,29 +298,31 @@ class _SettingScreenWidgetState extends State<SettingScreenWidget>
                                       child: Row(
                                         mainAxisSize: MainAxisSize.max,
                                         children: [
-                                          SvgPicture.asset("assets/svg/rotate-right.svg",
-                                          height: 20,
-                                          color: FlutterFlowTheme.of(context)
-                                              .secondaryText,
-                                          width: 20,),
+                                          SvgPicture.asset(
+                                            "assets/svg/rotate-right.svg",
+                                            height: 20,
+                                            color: FlutterFlowTheme.of(context)
+                                                .secondaryText,
+                                            width: 20,
+                                          ),
                                           Expanded(
                                             child: Text(
                                               'Sync Status',
-                                              style: FlutterFlowTheme.of(context)
-                                                  .bodyLarge
-                                                  .override(
-                                                fontFamily: 'MonaSans',
-                                                letterSpacing: 0.0,
-                                              ),
+                                              style:
+                                                  FlutterFlowTheme.of(context)
+                                                      .bodyLarge
+                                                      .override(
+                                                        fontFamily: 'MonaSans',
+                                                        letterSpacing: 0.0,
+                                                      ),
                                             ),
                                           ),
                                           Row(
                                             mainAxisSize: MainAxisSize.max,
                                             children: [
                                               Text(
-                                                    () {
-                                                  if ((FFAppState().syncStatus ==
-                                                      null) ||
+                                                () {
+                                                  if ((FFAppState().syncStatus == null) ||
                                                       valueOrDefault<bool>(
                                                         FFAppState()
                                                             .syncStatus
@@ -327,42 +338,46 @@ class _SettingScreenWidgetState extends State<SettingScreenWidget>
                                                     return 'Needed';
                                                   }
                                                 }(),
-                                                style: FlutterFlowTheme.of(context)
-                                                    .bodyLarge
-                                                    .override(
-                                                  fontFamily: 'MonaSans',
-                                                  color: () {
-                                                    if ((FFAppState()
-                                                        .syncStatus ==
-                                                        null) ||
-                                                        valueOrDefault<bool>(
-                                                          FFAppState()
-                                                              .syncStatus
-                                                              .uploading,
-                                                          true,
-                                                        )) {
-                                                      return FlutterFlowTheme
-                                                          .of(context)
-                                                          .warning;
-                                                    } else if (FFAppState()
-                                                        .syncStatus
-                                                        .hasSynced) {
-                                                      return FlutterFlowTheme
-                                                          .of(context)
-                                                          .success;
-                                                    } else {
-                                                      return FlutterFlowTheme
-                                                          .of(context)
-                                                          .error;
-                                                    }
-                                                  }(),
-                                                  letterSpacing: 0.0,
-                                                ),
+                                                style:
+                                                    FlutterFlowTheme.of(context)
+                                                        .bodyLarge
+                                                        .override(
+                                                          fontFamily:
+                                                              'MonaSans',
+                                                          color: () {
+                                                            if ((FFAppState()
+                                                                        .syncStatus ==
+                                                                    null) ||
+                                                                valueOrDefault<
+                                                                    bool>(
+                                                                  FFAppState()
+                                                                      .syncStatus
+                                                                      .uploading,
+                                                                  true,
+                                                                )) {
+                                                              return FlutterFlowTheme
+                                                                      .of(context)
+                                                                  .warning;
+                                                            } else if (FFAppState()
+                                                                .syncStatus
+                                                                .hasSynced) {
+                                                              return FlutterFlowTheme
+                                                                      .of(context)
+                                                                  .success;
+                                                            } else {
+                                                              return FlutterFlowTheme
+                                                                      .of(context)
+                                                                  .error;
+                                                            }
+                                                          }(),
+                                                          letterSpacing: 0.0,
+                                                        ),
                                               ),
                                               Builder(
                                                 builder: (context) {
-                                                  if ((FFAppState().syncStatus ==
-                                                      null) ||
+                                                  if ((FFAppState()
+                                                              .syncStatus ==
+                                                          null) ||
                                                       valueOrDefault<bool>(
                                                         FFAppState()
                                                             .syncStatus
@@ -371,28 +386,32 @@ class _SettingScreenWidgetState extends State<SettingScreenWidget>
                                                       )) {
                                                     return Icon(
                                                       Icons.sync,
-                                                      color: FlutterFlowTheme.of(
-                                                          context)
-                                                          .warning,
+                                                      color:
+                                                          FlutterFlowTheme.of(
+                                                                  context)
+                                                              .warning,
                                                       size: 16.0,
-                                                    ).animateOnPageLoad(animationsMap[
-                                                    'iconOnPageLoadAnimation']!);
+                                                    ).animateOnPageLoad(
+                                                        animationsMap[
+                                                            'iconOnPageLoadAnimation']!);
                                                   } else if (FFAppState()
                                                       .syncStatus
                                                       .hasSynced) {
                                                     return Icon(
                                                       FFIcons.kicCheckCircle,
-                                                      color: FlutterFlowTheme.of(
-                                                          context)
-                                                          .success,
+                                                      color:
+                                                          FlutterFlowTheme.of(
+                                                                  context)
+                                                              .success,
                                                       size: 16.0,
                                                     );
                                                   } else {
                                                     return Icon(
                                                       FFIcons.kicError,
-                                                      color: FlutterFlowTheme.of(
-                                                          context)
-                                                          .error,
+                                                      color:
+                                                          FlutterFlowTheme.of(
+                                                                  context)
+                                                              .error,
                                                       size: 16.0,
                                                     );
                                                   }
@@ -400,14 +419,16 @@ class _SettingScreenWidgetState extends State<SettingScreenWidget>
                                               ),
                                             ].divide(SizedBox(width: 12.0)),
                                           ),
-                                          if (functions.getAccessPermissionAllow(
-                                              FFAppState().user.permissions,
-                                              AccessPermission.settings,
-                                              FFAppState().user.profile))
+                                          if (functions
+                                              .getAccessPermissionAllow(
+                                                  FFAppState().user.permissions,
+                                                  AccessPermission.settings,
+                                                  FFAppState().user.profile))
                                             Icon(
                                               FFIcons.kicArrowNext,
-                                              color: FlutterFlowTheme.of(context)
-                                                  .secondaryText,
+                                              color:
+                                                  FlutterFlowTheme.of(context)
+                                                      .secondaryText,
                                               size: 24.0,
                                             ),
                                         ].divide(SizedBox(width: 20.0)),
@@ -422,8 +443,7 @@ class _SettingScreenWidgetState extends State<SettingScreenWidget>
                                       title: 'Media Cache',
                                       endLable: "100%",
                                       showTrailingIcon: true,
-                                      onTap: () async {
-                                      },
+                                      onTap: () async {},
                                     ),
                                   ),
                                   wrapWithModel(
@@ -434,22 +454,94 @@ class _SettingScreenWidgetState extends State<SettingScreenWidget>
                                       title: 'Tutorials',
                                       endLable: "Read More",
                                       showTrailingIcon: true,
-                                      onTap: () async {
-                                      },
+                                      onTap: () async {},
                                     ),
                                   ),
+
+                                  if (kDebugMode)
+                                    wrapWithModel(
+                                      model: _model.debugTokenModel,
+                                      updateCallback: () => safeSetState(() {}),
+                                      child: SettingTileWidget2(
+                                        iconPath: "assets/svg/lock.svg",
+                                        title: 'App Check Token',
+                                        endLable: 'View',
+                                        showTrailingIcon: true,
+                                        onTap: () async {
+                                          final token = await actions.getFBAppCheckToken();
+                                          if (token == null) {
+                                            ScaffoldMessenger.of(context).showSnackBar(
+                                              SnackBar(content: Text('Failed to get token')),
+                                            );
+                                            return;
+                                          }
+                                          await showModalBottomSheet(
+                                            context: context,
+                                            backgroundColor: FlutterFlowTheme.of(context).primaryBackground,
+                                            shape: const RoundedRectangleBorder(
+                                              borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+                                            ),
+                                            builder: (context) {
+                                              return Padding(
+                                                padding: const EdgeInsets.all(20.0),
+                                                child: SingleChildScrollView(
+                                                  child: Column(
+                                                    mainAxisSize: MainAxisSize.min,
+                                                    children: [
+                                                      Text(
+                                                        'App Check Token',
+                                                        style: FlutterFlowTheme.of(context).titleLarge,
+                                                      ),
+                                                      const SizedBox(height: 10),
+                                                      SelectableText(
+                                                        token,
+                                                        style: FlutterFlowTheme.of(context).bodyMedium,
+                                                      ),
+                                                      const SizedBox(height: 20),
+                                                      Row(
+                                                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                                                        children: [
+                                                          ElevatedButton.icon(
+                                                            onPressed: () async {
+                                                              await Clipboard.setData(ClipboardData(text: token));
+                                                              ScaffoldMessenger.of(context).showSnackBar(
+                                                                SnackBar(content: Text('Token copied to clipboard')),
+                                                              );
+                                                              Navigator.pop(context);
+                                                            },
+                                                            icon: const Icon(Icons.copy),
+                                                            label: const Text('Copy'),
+                                                          ),
+                                                          ElevatedButton.icon(
+                                                            onPressed: () async {
+                                                              await Share.share(token);
+                                                              Navigator.pop(context);
+                                                            },
+                                                            icon: const Icon(Icons.share),
+                                                            label: const Text('Share'),
+                                                          ),
+                                                        ],
+                                                      ),
+                                                      const SizedBox(height: 20),
+                                                    ],
+                                                  ),
+                                                ),
+                                              );
+                                            },
+                                          );
+                                        },
+                                      ),
+                                    ),
+
                                   /// disabled POS for ios
-                                  if (false && isiOS && _model.posEventId != null)
+                                  if (isiOS && _model.posEventId != null)
                                     Builder(builder: (context) {
-                                      final currentDevice = _model.devices
-                                          .firstWhere(
-                                              (e) =>
-                                          e.deviceId == FFAppState().uuid,
-                                          orElse: () => DeviceRow({}));
-                                      if (currentDevice.tapToPayEnabled != true) {
+                                      final isTTPEnabled = AppConfig.isEnabledTTP(devices: _model.devices);
+                                      if (!isTTPEnabled) {
                                         return Padding(
-                                          padding: EdgeInsetsDirectional.fromSTEB(
-                                              12.0, 16.0, 12.0, 16.0),
+                                          padding:
+                                              EdgeInsetsDirectional.fromSTEB(
+                                                  12.0, 16.0, 12.0, 16.0),
                                           child: InkWell(
                                             splashColor: Colors.transparent,
                                             focusColor: Colors.transparent,
@@ -464,8 +556,9 @@ class _SettingScreenWidgetState extends State<SettingScreenWidget>
                                                   builder: (context) {
                                                     return CardScanningWidget(
                                                         eventId:
-                                                        _model.posEventId!);
+                                                            _model.posEventId!);
                                                   });
+                                              await watchPins();
                                             },
                                             child: Row(
                                               mainAxisSize: MainAxisSize.max,
@@ -477,14 +570,14 @@ class _SettingScreenWidgetState extends State<SettingScreenWidget>
                                                 Expanded(
                                                   child: Text(
                                                     'Enable Tap to Pay on iPhone',
-                                                    style:
-                                                    FlutterFlowTheme.of(context)
+                                                    style: FlutterFlowTheme.of(
+                                                            context)
                                                         .bodyLarge
                                                         .override(
-                                                      fontFamily:
-                                                      'MonaSans',
-                                                      letterSpacing: 0.0,
-                                                    ),
+                                                          fontFamily:
+                                                              'MonaSans',
+                                                          letterSpacing: 0.0,
+                                                        ),
                                                   ),
                                                 ),
                                                 // if (functions
@@ -496,8 +589,8 @@ class _SettingScreenWidgetState extends State<SettingScreenWidget>
                                                 //         FFAppState().user.profile))
                                                 Icon(
                                                   FFIcons.kicArrowNext,
-                                                  color:
-                                                  FlutterFlowTheme.of(context)
+                                                  color: FlutterFlowTheme.of(
+                                                          context)
                                                       .secondaryText,
                                                   size: 24.0,
                                                 ),
@@ -517,17 +610,22 @@ class _SettingScreenWidgetState extends State<SettingScreenWidget>
                                           onTap: () async {
                                             logFirebaseEvent(
                                                 'SETTING_SCREEN_PAGE_Row_jqinbfa_ON_TAP');
-                                            await actions.disableTapToPay(
-                                                FFAppState().uuid,
-                                                FFAppState().user.userId);
-                                            safeSetState(() {});
-                                            // await showModalBottomSheet(
-                                            //     context: context,
-                                            //     isScrollControlled: true,
-                                            //     builder: (context) {
-                                            //       return CardScanningWidget(
-                                            //           eventId: _model.posEventId!);
-                                            //     });
+                                            await showModalBottomSheet(
+                                                context: context,
+                                                isScrollControlled: true,
+                                                builder: (context) {
+                                                  return DisableAlertWidget(
+                                                      onAction: () async {
+                                                    await actions
+                                                        .disableTapToPay(
+                                                            FFAppState().uuid,
+                                                            FFAppState()
+                                                                .user
+                                                                .userId);
+                                                    Navigator.pop(context);
+                                                  });
+                                                });
+                                            await watchPins();
                                           },
                                           child: Row(
                                             mainAxisSize: MainAxisSize.max,
@@ -539,13 +637,13 @@ class _SettingScreenWidgetState extends State<SettingScreenWidget>
                                               Expanded(
                                                 child: Text(
                                                   'Disable Tap to Pay on iPhone',
-                                                  style:
-                                                  FlutterFlowTheme.of(context)
+                                                  style: FlutterFlowTheme.of(
+                                                          context)
                                                       .bodyLarge
                                                       .override(
-                                                    fontFamily: 'MonaSans',
-                                                    letterSpacing: 0.0,
-                                                  ),
+                                                        fontFamily: 'MonaSans',
+                                                        letterSpacing: 0.0,
+                                                      ),
                                                 ),
                                               ),
                                               // if (functions
@@ -557,8 +655,9 @@ class _SettingScreenWidgetState extends State<SettingScreenWidget>
                                               //     FFAppState().user.profile))
                                               Icon(
                                                 FFIcons.kicArrowNext,
-                                                color: FlutterFlowTheme.of(context)
-                                                    .secondaryText,
+                                                color:
+                                                    FlutterFlowTheme.of(context)
+                                                        .secondaryText,
                                                 size: 24.0,
                                               ),
                                             ].divide(SizedBox(width: 20.0)),
@@ -604,19 +703,20 @@ class _SettingScreenWidgetState extends State<SettingScreenWidget>
                                   style: FlutterFlowTheme.of(context)
                                       .titleSmall
                                       .override(
-                                    fontFamily: 'MonaSans',
-                                    letterSpacing: 0.0,
-                                  ),
+                                        fontFamily: 'MonaSans',
+                                        letterSpacing: 0.0,
+                                      ),
                                 ),
                               ),
                               wrapWithModel(
                                 model: _model.settingTileModel5,
                                 updateCallback: () => safeSetState(() {}),
                                 child: SettingTileWidget2(
-                                 iconPath: "assets/svg/box.svg",
+                                  iconPath: "assets/svg/box.svg",
                                   title: 'Version',
                                   endLable: _model.appVersionName,
-                                  onTap: () async {}, showTrailingIcon: true,
+                                  onTap: () async {},
+                                  showTrailingIcon: true,
                                 ),
                               ),
                               // if ((FFAppState().user.isProducer == 1) && (FFAppState().user.isManager == 1))
@@ -670,10 +770,10 @@ class _SettingScreenWidgetState extends State<SettingScreenWidget>
                                 model: _model.settingTileModel8,
                                 updateCallback: () => safeSetState(() {}),
                                 child: SettingTileWidget2(
-            iconPath: "assets/svg/mobile.svg",
+                                  iconPath: "assets/svg/mobile.svg",
                                   title: 'Device',
                                   endLable: (FFAppState().user.profile ==
-                                      Profile.manager)
+                                          Profile.manager)
                                       ? '${FFAppState().selectedProducer.firstName}\'s Scanner ( ${FFAppState().selectedProducer.userId.toString()} )'
                                       : '${FFAppState().user.user.firstName}\'s Scanner ( ${FFAppState().user.userId.toString()} )',
                                   showTrailingIcon: true,
@@ -686,7 +786,7 @@ class _SettingScreenWidgetState extends State<SettingScreenWidget>
                                   updateCallback: () => safeSetState(() {}),
                                   child: SettingTileWidget2(
                                     iconPath: "assets/svg/mobile.svg",
-                                   showTrailingIcon: true,
+                                    showTrailingIcon: true,
                                     title: 'Access Code',
                                     endLable: valueOrDefault<String>(
                                       _model.pinData.firstOrNull?.accessCode,
@@ -700,30 +800,31 @@ class _SettingScreenWidgetState extends State<SettingScreenWidget>
                                   model: _model.settingTileModel10,
                                   updateCallback: () => safeSetState(() {}),
                                   child: SettingTileWidget2(
-                                   iconPath: "assets/svg/lock.svg",
+                                    iconPath: "assets/svg/lock.svg",
                                     title: 'Pin',
                                     endLable: FFAppState().user.profile ==
-                                        Profile.scanner
+                                            Profile.scanner
                                         ? valueOrDefault<String>(
-                                      _model.pinData
-                                          .where((e) =>
-                                      e.uid ==
-                                          FFAppState().user.pinId)
-                                          .toList()
-                                          .firstOrNull
-                                          ?.pin
-                                          .toString(),
-                                      'N/A',
-                                    )
+                                            _model.pinData
+                                                .where((e) =>
+                                                    e.uid ==
+                                                    FFAppState().user.pinId)
+                                                .toList()
+                                                .firstOrNull
+                                                ?.pin
+                                                .toString(),
+                                            'N/A',
+                                          )
                                         : valueOrDefault<String>(
-                                      _model.pinData
-                                          .where((e) => e.type == 'SYSTEM')
-                                          .toList()
-                                          .firstOrNull
-                                          ?.pin
-                                          .toString(),
-                                      'N/A',
-                                    ),
+                                            _model.pinData
+                                                .where(
+                                                    (e) => e.type == 'SYSTEM')
+                                                .toList()
+                                                .firstOrNull
+                                                ?.pin
+                                                .toString(),
+                                            'N/A',
+                                          ),
                                     showTrailingIcon: true,
                                     onTap: () async {},
                                   ),
@@ -737,12 +838,11 @@ class _SettingScreenWidgetState extends State<SettingScreenWidget>
                                   endLable: FFAppState().splashScreenStatus,
                                   showTrailingIcon: true,
                                   onTap: () async {
-                                    context.pushNamed(SplashSettingWidget.routeName);
+                                    context.pushNamed(
+                                        SplashSettingWidget.routeName);
                                   },
                                 ),
                               ),
-        
-        
                             ],
                           ),
                           if ((FFAppState().user.profile == Profile.admin) ||
@@ -760,52 +860,52 @@ class _SettingScreenWidgetState extends State<SettingScreenWidget>
                                       style: FlutterFlowTheme.of(context)
                                           .titleSmall
                                           .override(
-                                        fontFamily: 'MonaSans',
-                                        letterSpacing: 0.0,
-                                      ),
+                                            fontFamily: 'MonaSans',
+                                            letterSpacing: 0.0,
+                                          ),
                                     ),
                                   ),
                                 Builder(
                                   builder: (context) {
                                     final device = _model.devices.toList();
-        
+
                                     return Column(
                                       mainAxisSize: MainAxisSize.max,
                                       children: List.generate(device.length,
-                                              (deviceIndex) {
-                                            final deviceItem = device[deviceIndex];
-                                            return SettingTileWidget(
-                                              key: Key(
-                                                  'Keydd6_${deviceIndex}_of_${device.length}'),
-                                              icon: Icon(
-                                                FFIcons.kicSmartPhone,
-                                                color: FlutterFlowTheme.of(context)
-                                                    .secondaryText,
-                                                size: 20.0,
-                                              ),
-                                              title: deviceItem.name,
-                                              endLable: '',
-                                              showTrailingIcon: true,
-                                              onTap: () async {
-                                                logFirebaseEvent(
-                                                    'SETTING_SCREEN_Container_dd6wt1i1_CALLBA');
-        
-                                                context.pushNamed(
-                                                  AddScannersScreenWidget.routeName,
-                                                  queryParameters: {
-                                                    'scanner': serializeParam(
-                                                      _model.pinData.firstOrNull,
-                                                      ParamType.SupabaseRow,
-                                                    ),
-                                                    'device': serializeParam(
-                                                      deviceItem,
-                                                      ParamType.SupabaseRow,
-                                                    ),
-                                                  }.withoutNulls,
-                                                );
-                                              },
+                                          (deviceIndex) {
+                                        final deviceItem = device[deviceIndex];
+                                        return SettingTileWidget(
+                                          key: Key(
+                                              'Keydd6_${deviceIndex}_of_${device.length}'),
+                                          icon: Icon(
+                                            FFIcons.kicSmartPhone,
+                                            color: FlutterFlowTheme.of(context)
+                                                .secondaryText,
+                                            size: 20.0,
+                                          ),
+                                          title: deviceItem.name,
+                                          endLable: '',
+                                          showTrailingIcon: true,
+                                          onTap: () async {
+                                            logFirebaseEvent(
+                                                'SETTING_SCREEN_Container_dd6wt1i1_CALLBA');
+
+                                            context.pushNamed(
+                                              AddScannersScreenWidget.routeName,
+                                              queryParameters: {
+                                                'scanner': serializeParam(
+                                                  _model.pinData.firstOrNull,
+                                                  ParamType.SupabaseRow,
+                                                ),
+                                                'device': serializeParam(
+                                                  deviceItem,
+                                                  ParamType.SupabaseRow,
+                                                ),
+                                              }.withoutNulls,
                                             );
-                                          }),
+                                          },
+                                        );
+                                      }),
                                     );
                                   },
                                 ),
@@ -825,46 +925,48 @@ class _SettingScreenWidgetState extends State<SettingScreenWidget>
                                       style: FlutterFlowTheme.of(context)
                                           .titleSmall
                                           .override(
-                                        fontFamily: 'MonaSans',
-                                        letterSpacing: 0.0,
-                                      ),
+                                            fontFamily: 'MonaSans',
+                                            letterSpacing: 0.0,
+                                          ),
                                     ),
                                   ),
                                 Builder(
                                   builder: (context) {
                                     final pin = _model.pinData
-                                        .where((e) => (FFAppState().user.profile ==
-                                        Profile.manager &&
-                                        FFAppState().user.userId !=
-                                            FFAppState()
-                                                .selectedProducer
-                                                .userId)
-                                        ? e.type == 'ON_SITE_PIN' &&
-                                        e.createdBy ==
-                                            FFAppState().user.userId
-                                        : e.type == 'ON_SITE_PIN')
+                                        .where((e) =>
+                                            (FFAppState().user.profile ==
+                                                        Profile.manager &&
+                                                    FFAppState().user.userId !=
+                                                        FFAppState()
+                                                            .selectedProducer
+                                                            .userId)
+                                                ? e.type == 'ON_SITE_PIN' &&
+                                                    e.createdBy ==
+                                                        FFAppState().user.userId
+                                                : e.type == 'ON_SITE_PIN')
                                         .toList();
                                     // final pin = _model.pinData.where((e) => e.type == 'ON_SITE_PIN' && (FFAppState().user.profile != Profile.manager || e.createdBy == FFAppState().user.userId)).toList();
-        
+
                                     return Column(
                                       mainAxisSize: MainAxisSize.max,
                                       children:
-                                      List.generate(pin.length, (pinIndex) {
+                                          List.generate(pin.length, (pinIndex) {
                                         final pinItem = pin[pinIndex];
                                         return wrapWithModel(
-                                          model:
-                                          _model.settingTileModels12.getModel(
+                                          model: _model.settingTileModels12
+                                              .getModel(
                                             pinItem.uid.toString(),
                                             pinIndex,
                                           ),
-                                          updateCallback: () => safeSetState(() {}),
+                                          updateCallback: () =>
+                                              safeSetState(() {}),
                                           child: SettingTileWidget2(
                                             key: Key(
                                               'Key402_${pinItem.uid.toString()}',
                                             ),
-                                           iconPath: "assets/svg/mobile.svg",
+                                            iconPath: "assets/svg/mobile.svg",
                                             title: pinItem.name != null &&
-                                                pinItem.name!.isNotEmpty
+                                                    pinItem.name!.isNotEmpty
                                                 ? '${pinItem.name ?? ""} ( ${pinItem.pin.toString()} )'
                                                 : pinItem.pin.toString(),
                                             endLable: '',
@@ -872,9 +974,10 @@ class _SettingScreenWidgetState extends State<SettingScreenWidget>
                                             onTap: () async {
                                               logFirebaseEvent(
                                                   'SETTING_SCREEN_Container_402cfbov_CALLBA');
-        
+
                                               context.pushNamed(
-                                                PinDetailsScreenWidget.routeName,
+                                                PinDetailsScreenWidget
+                                                    .routeName,
                                                 queryParameters: {
                                                   'pinData': serializeParam(
                                                     pinItem,
@@ -904,11 +1007,14 @@ class _SettingScreenWidgetState extends State<SettingScreenWidget>
                                       logFirebaseEvent(
                                           'SETTING_SCREEN_Container_1l68dtn9_ON_TAP');
                                       if ((FFAppState().user.profile ==
-                                          Profile.manager) &&
-                                          (FFAppState().selectedProducer.userId !=
+                                              Profile.manager) &&
+                                          (FFAppState()
+                                                  .selectedProducer
+                                                  .userId !=
                                               FFAppState().user.userId)) {
                                         context.pushNamed(
-                                            PinManagerEventsScreenWidget.routeName);
+                                            PinManagerEventsScreenWidget
+                                                .routeName);
                                       } else {
                                         context.pushNamed(
                                           PinInfoScreenWidget.routeName,
@@ -930,7 +1036,8 @@ class _SettingScreenWidgetState extends State<SettingScreenWidget>
                                       height: 60.0,
                                       decoration: BoxDecoration(
                                         color: Colors.white,
-                                        borderRadius: BorderRadius.circular(10.0),
+                                        borderRadius:
+                                            BorderRadius.circular(10.0),
                                       ),
                                       alignment: AlignmentDirectional(0.0, 0.0),
                                       child: Row(
@@ -946,11 +1053,11 @@ class _SettingScreenWidgetState extends State<SettingScreenWidget>
                                             style: FlutterFlowTheme.of(context)
                                                 .bodyMedium
                                                 .override(
-                                              color: Colors.black,
-                                              fontFamily: 'MonaSans',
-                                              letterSpacing: 0.0,
-                                              fontWeight: FontWeight.w600,
-                                            ),
+                                                  color: Colors.black,
+                                                  fontFamily: 'MonaSans',
+                                                  letterSpacing: 0.0,
+                                                  fontWeight: FontWeight.w600,
+                                                ),
                                           ),
                                         ].divide(SizedBox(width: 12.0)),
                                       ),
@@ -980,13 +1087,13 @@ class _SettingScreenWidgetState extends State<SettingScreenWidget>
                                       child: LogoutDialogWidget(
                                         title: 'Logout?',
                                         subTitle:
-                                        'This will delete all app data and take you back to main login screen.',
+                                            'This will delete all app data and take you back to main login screen.',
                                         firstBtnText: 'Logout',
                                         secondBtnText: 'Go Back',
                                         firstBtnColor:
-                                        FlutterFlowTheme.of(context).error,
+                                            FlutterFlowTheme.of(context).error,
                                         secondBtnColor:
-                                        FlutterFlowTheme.of(context).info,
+                                            FlutterFlowTheme.of(context).info,
                                         firstTap: () async {
                                           actions.clearDatabase();
                                           Navigator.pop(context);
@@ -998,7 +1105,7 @@ class _SettingScreenWidgetState extends State<SettingScreenWidget>
                                                 ParamType.bool,
                                               ),
                                             }.withoutNulls,
-                                          );
+                                              );
                                         },
                                         secondTap: () async {
                                           Navigator.pop(context);
@@ -1026,12 +1133,11 @@ class _SettingScreenWidgetState extends State<SettingScreenWidget>
                                       style: FlutterFlowTheme.of(context)
                                           .bodyLarge
                                           .override(
-                                          fontFamily: 'MonaSans',
-                                          color: Colors.black,
-                                          letterSpacing: 0.0,
-                                          fontSize: 16,
-                                          fontWeight: FontWeight.w400
-                                      ),
+                                              fontFamily: 'MonaSans',
+                                              color: Colors.black,
+                                              letterSpacing: 0.0,
+                                              fontSize: 16,
+                                              fontWeight: FontWeight.w400),
                                     ),
                                   ].divide(SizedBox(width: 20.0)),
                                 ),
@@ -1043,7 +1149,9 @@ class _SettingScreenWidgetState extends State<SettingScreenWidget>
                       ),
                     ),
                   ),
-                  SizedBox(height: 45,),
+                  SizedBox(
+                    height: 45,
+                  ),
                 ].divide(SizedBox(height: 20.0)),
               ),
             ),
@@ -1053,6 +1161,3 @@ class _SettingScreenWidgetState extends State<SettingScreenWidget>
     );
   }
 }
-
-
-

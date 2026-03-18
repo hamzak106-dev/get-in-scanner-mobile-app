@@ -24,32 +24,21 @@ class _EventWiseWidgetState extends State<EventWiseWidget> {
 
   @override
   Widget build(BuildContext context) {
-    return
-        // (selectedEvent == null)
-        //   ?
-        widget.events.isEmpty
-            ? Center(
-                child: NoEventFoundWidget(),
-              )
-            : ListView.separated(
-                separatorBuilder: (context, index) => SizedBox(height: 12),
-                itemBuilder: (context, index) {
-                  return EventWiseCardWidget(
-                      onTap: () async {
-                        safeSetState(() {
-                          selectedEvent = widget.events[index];
-                        });
-                      },
-                      event: widget.events[index]);
-                },
-                itemCount: widget.events.length);
-    // : AmountEntryWidget(
-    //     eventId: selectedEvent!.eventId.toString(),
-    //     onContinue: () {
-    //       safeSetState(() {
-    //         selectedEvent = null;
-    //       });
-    //     },
-    //   );
+    return widget.events.isEmpty
+        ? Center(
+            child: NoEventFoundWidget(),
+          )
+        : ListView.separated(
+            separatorBuilder: (context, index) => SizedBox(height: 12),
+            itemBuilder: (context, index) {
+              return EventWiseCardWidget(
+                  onTap: () async {
+                    safeSetState(() {
+                      selectedEvent = widget.events[index];
+                    });
+                  },
+                  event: widget.events[index]);
+            },
+            itemCount: widget.events.length);
   }
 }

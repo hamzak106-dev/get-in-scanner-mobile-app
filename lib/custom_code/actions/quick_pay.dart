@@ -5,6 +5,8 @@ import 'package:flutter/foundation.dart';
 import 'package:g_e_t_i_n_scanner/app_state.dart';
 import 'package:g_e_t_i_n_scanner/backend/api_requests/api_calls.dart';
 import 'package:g_e_t_i_n_scanner/backend/schema/structs/tap_to_pay_resp_struct.dart';
+import 'package:g_e_t_i_n_scanner/backend/schema/structs/terminal_onboarding_link_struct.dart';
+import 'package:g_e_t_i_n_scanner/flutter_flow/flutter_flow_util.dart';
 import 'package:mek_stripe_terminal/mek_stripe_terminal.dart';
 import 'package:permission_handler/permission_handler.dart';
 
@@ -27,8 +29,6 @@ class QuickPay {
   StreamSubscription<ConnectionStatus>? _connectionSub;
   StreamSubscription<PaymentStatus>? _paymentSub;
 
-  String? _connectionToken;
-
   VoidCallback? onSuccess;
   void Function(String? message)? onError;
   void Function(String status)? onStatus;
@@ -48,10 +48,10 @@ class QuickPay {
     this.onCancel = onCancel;
 
     try {
-      await initTerminal(int.parse(eventId));
-      // if (_connectedReader == null) {
-      //   await _discoverAndConnect();
-      // } else {
+      if (_connectedReader == null) {
+        await _discoverAndConnect();
+
+      } else {
       if (!supported) {
         onError?.call(
             "Tap to Pay ${Platform.isIOS ? "on iPhone" : ""} is not supported on this device.");
@@ -63,6 +63,7 @@ class QuickPay {
         return;
       }
       _connectedReader = await Terminal.instance.getConnectedReader();
+
       if (_connectedReader == null) {
         onError?.call(
             "No reader connected. Please ensure the reader is connected and try again.");
@@ -71,7 +72,7 @@ class QuickPay {
       onStatus?.call(
           "Already connected to reader: ${_connectedReader?.serialNumber}");
       await _collectPayment(amount, eventId);
-      // }
+      }
     } catch (e) {
       onError?.call("Payment initialization failed: ${e.toString()}");
     }
@@ -84,25 +85,22 @@ class QuickPay {
     void Function(String status)? onStatus,
   }) async {
     // Request required permissions
-    final permissions = [
-      Permission.locationWhenInUse,
-      Permission.bluetooth,
-      if (Platform.isAndroid) Permission.bluetoothScan,
-      if (Platform.isAndroid) Permission.bluetoothConnect,
-    ];
-    await permissions.request();
+    if(isAndroid){
+      final permissions = [
+        Permission.location,
+        // Permission.bluetooth,
+       Permission.bluetoothScan,
+       Permission.bluetoothConnect,
+      ];
+      await permissions.request();
+    }
 
     // Initialize terminal if not yet done
-    _connectionToken = await fetchToken(eventId);
-    if (_connectionToken == null || _connectionToken!.isEmpty) {
-      onError?.call("Failed to fetch connection token.");
-      return;
-    }
     if (!Terminal.isInitialized) {
       try {
         await Terminal.initTerminal(
           shouldPrintLogs: kDebugMode,
-          fetchToken: () async => _connectionToken ?? "",
+          fetchToken: () => fetchToken(eventId),
         );
       } catch (e) {
         onError?.call(
@@ -115,19 +113,29 @@ class QuickPay {
     supported = await Terminal.instance.supportsReadersOfType(
       deviceType: DeviceType.tapToPay,
       discoveryConfiguration:
-          TapToPayDiscoveryConfiguration(isSimulated: FlavorHelper.devFlavor),
+          TapToPayDiscoveryConfiguration(isSimulated: !FlavorHelper.prodFlavor),
     );
+    print("Tap to Pay support: $supported");
     if (!supported) {
       onError?.call(
           "Tap to Pay ${Platform.isIOS ? "on iPhone" : ''} is not supported on this device.");
       return;
     }
+
+    bool alreadyInitialized = false;
+    void callOnInitialized() {
+      if (!alreadyInitialized) {
+        alreadyInitialized = true;
+        onInitialized?.call();
+      }
+    }
+
     _connectedReader = await Terminal.instance.getConnectedReader();
 
-    if (_connectedReader == null) {
-      await _discoverAndConnect();
+    if (_connectedReader != null) {
+       callOnInitialized();
     } else {
-      onInitialized?.call();
+      await _discoverAndConnect();
     }
 
     // Setup listeners once
@@ -137,7 +145,7 @@ class QuickPay {
     _connectionSub =
         Terminal.instance.onConnectionStatusChange.listen((status) {
       if (status == ConnectionStatus.connected) {
-        onInitialized?.call();
+        callOnInitialized();
       }
       onStatus?.call("Reader connection: $status");
     });
@@ -180,24 +188,54 @@ class QuickPay {
   }
 
   Future<void> _collectPayment(String amount, String eventId) async {
+    final totalStopwatch = Stopwatch()..start();
+    final stepStopwatch = Stopwatch();
+
+    void logStep(String stepName) {
+      stepStopwatch.stop();
+      print('[$stepName] took ${stepStopwatch.elapsedMilliseconds}ms');
+      stepStopwatch.reset();
+    }
+
     try {
+      // Step 1: Create Payment Intent
+      stepStopwatch.start();
       final clientSecret = await _createPaymentIntent(amount, eventId);
+      logStep('Create Payment Intent');
+
       if (clientSecret == null) throw Exception("No client secret found");
 
+      // Step 2: Retrieve Payment Intent
+      stepStopwatch.start();
       final retrievedIntent =
-          await Terminal.instance.retrievePaymentIntent(clientSecret);
+      await Terminal.instance.retrievePaymentIntent(clientSecret);
+      logStep('Retrieve Payment Intent');
+
+      // Step 3: Collect Payment Method
+      stepStopwatch.start();
       final intentWithPM =
-          await Terminal.instance.collectPaymentMethod(retrievedIntent);
+      await Terminal.instance.collectPaymentMethod(retrievedIntent);
+      logStep('Collect Payment Method');
+
+      // Step 4: Confirm Payment Intent
+      stepStopwatch.start();
       final confirmedIntent =
-          await Terminal.instance.confirmPaymentIntent(intentWithPM);
+      await Terminal.instance.confirmPaymentIntent(intentWithPM);
+      logStep('Confirm Payment Intent');
+
+      totalStopwatch.stop();
+      print('✓ TOTAL TIME: ${totalStopwatch.elapsedMilliseconds}ms (${(totalStopwatch.elapsedMilliseconds / 1000).toStringAsFixed(2)}s)');
 
       onSuccess?.call();
       onStatus?.call("Payment successful: ${confirmedIntent.id}");
     } on TerminalException catch (e) {
+      totalStopwatch.stop();
+      print('✗ Failed after ${totalStopwatch.elapsedMilliseconds}ms');
+
       if (e.code == TerminalExceptionCode.canceled) {
         onCancel?.call();
       } else {
-        onError?.call("Payment failed: ${e.code}");
+        onError?.call("Payment failed: ${e}");
       }
     }
   }
@@ -241,6 +279,26 @@ class QuickPay {
     }
 
     return terminalStruct!.connections.secret;
+  }
+
+  Future<TerminalOnboardingLinkStruct?> getOnboardingLink(String ScannerName) async {
+    final resp = await GetInScannerAPIsGroup.terminalOnboardingCall.call(
+      apiBaseURL: FlavorHelper.appFlavor.getInAppBaseUrl,
+      scannerApiKey: FlavorHelper.appFlavor.scannerApiKey,
+      ScannerName: ScannerName,
+    );
+
+    if (!resp.succeeded) {
+      throw Exception("Failed to fetch onboarding link");
+    }
+
+    TerminalOnboardingLinkStructResp? linkStructResp = TerminalOnboardingLinkStructResp.maybeFromMap(
+        resp.jsonBody);
+    if (linkStructResp == null || linkStructResp.data == null) {
+      return null;
+    }
+
+    return linkStructResp.data;
   }
 
   Future<void> dispose() async {
